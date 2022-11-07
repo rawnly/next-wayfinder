@@ -1,0 +1,22 @@
+
+> ts-package@0.0.1 coverage /Users/federicovitale/Developer/templates/ts-package
+> vitest run -c ./config/vitest.config.ts --coverage
+
+c
+ RUN  v0.24.5 /Users/federicovitale/Developer/templates/ts-package
+      Coverage enabled with c8
+
+ ✓ __tests__/sum.test.ts  (1 test) 2ms
+
+Test Files  1 passed (1)
+     Tests  1 passed (1)
+  Start at  10:04:33
+  Duration  599ms (transform 271ms, setup 0ms, collect 15ms, tests 2ms)
+
+ % Coverage report from c8
+----------|---------|----------|---------|---------|-------------------
+File      | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+----------|---------|----------|---------|---------|-------------------
+All files |     100 |      100 |     100 |     100 |                   
+ math.ts  |     100 |      100 |     100 |     100 |                   
+----------|---------|----------|---------|---------|-------------------

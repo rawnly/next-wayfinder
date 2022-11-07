@@ -1,0 +1,51 @@
+{
+    "name": "ts-package",
+    "version": "0.0.1",
+    "description": "a simple typescript package",
+    "main": "build/index.js",
+    "types": "build/index.d.ts",
+    "license": "MIT",
+    "keywords": [],
+    "author": "Federico Vitale <mail@fedevitale.dev>",
+    "contributors": [
+        "mail@fedevitale.dev"
+    ],
+    "scripts": {
+        "coverage": "vitest run -c ./config/vitest.config.ts --coverage",
+        "test": "vitest -c ./config/vitest.config.ts",
+        "build": "tsup src --config ./config/tsup.config.ts",
+        "lint-fix": "eslint src/**/*.ts --fix",
+        "lint": "eslint src/**/*.ts",
+        "dev": "tsup src --watch --config ./config/tsup.config.ts"
+    },
+    "exports": {
+        ".": {
+            "default": "./build/index.js",
+            "import": "./build/index.mjs",
+            "types": "./build/index.d.ts"
+        },
+        "./math": {
+            "import": "./build/math.mjs",
+            "default": "./build/math.js",
+            "types": "./build/math.d.ts"
+        }
+    },
+    "devDependencies": {
+        "@types/node": "^18.11.9",
+        "@typescript-eslint/eslint-plugin": "^5.42.0",
+        "@typescript-eslint/parser": "^5.42.0",
+        "@vitest/coverage-c8": "^0.24.5",
+        "@vitest/ui": "^0.24.5",
+        "eslint": "^8.26.0",
+        "eslint-config-prettier": "^8.5.0",
+        "eslint-import-resolver-typescript": "^3.5.2",
+        "eslint-plugin-import": "^2.26.0",
+        "eslint-plugin-unused-imports": "^2.0.0",
+        "prettier": "^2.7.1",
+        "tsup": "^6.3.0",
+        "turbo": "^1.6.3",
+        "typescript": "^4.8.4",
+        "vite-tsconfig-paths": "^3.5.2",
+        "vitest": "^0.24.5"
+    }
+}

@@ -1,0 +1,15 @@
+name: CI
+on:
+    push:
+    pull_request:
+
+jobs:
+    build-and-test:
+        runs-on: ubunut-latest
+        steps:
+            - name: Checkout Repo
+              uses: actions/checkout@v3
+            - name: Setup Node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
