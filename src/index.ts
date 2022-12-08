@@ -4,6 +4,7 @@ import { NextMiddleware, NextResponse } from "next/server"
 import { Middleware, NextRequestWithParams } from './types'
 import { parse, findMiddleware, addParams, getParamsDescriptor } from "./utils";
 
+export type { Middleware, NextMiddlewareWithParams, NextRequestWithParams } from './types'
 
 export function handlePaths(middlewares: Middleware[]): NextMiddleware {
   return async function(req, ev) {
