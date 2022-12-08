@@ -7,7 +7,7 @@
 
 
 ## Usage
-```
+```ts
 // middleware.ts
 
 import { handlePaths } from 'next-wayfinder'
