@@ -25,8 +25,18 @@ const middlewares: Middleware[] = [
   }
 ]
 
+test('should find the middleware with array', () => {
+  const middleware = findMiddleware([
+    {
+      matcher: ['/login'],
+      handler: () => null
+    }
+  ], { ...queryForPath, path: '/login' })
 
-test('should find the middleware', () => {
+  expect(middleware).toBeTruthy()
+})
+
+test('should find the middleware with string', () => {
   const middleware = findMiddleware(middlewares, queryForPath)
 
   expect(middleware).not.toBeUndefined()
