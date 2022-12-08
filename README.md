@@ -1,6 +1,9 @@
 # WayFinder
 > Apply multiple nextjs middlewares with ease
 
+> **WARN**
+> Not yet published!
+
 ```sh
   pnpm add next-wayfinder
 ```
