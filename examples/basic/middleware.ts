@@ -1,6 +1,6 @@
+import { handlePaths } from 'next-wayfinder'
 import { NextResponse } from 'next/server'
 
-import { handlePaths } from '../..'
 
 
 export default handlePaths([
