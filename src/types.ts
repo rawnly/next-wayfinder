@@ -8,10 +8,12 @@ export interface NextRequestWithParams extends NextRequest {
 
 export type NextMiddlewareWithParams = (request: NextRequestWithParams, event: NextFetchEvent) => ReturnType<NextMiddleware>
 
+export type PathMatcher = string | string[] | RegExp
+
 export type Middleware = RequireExactlyOne<{
   handler: NextMiddlewareWithParams | Middleware[],
   domain?: RegExp | ((domain: string) => boolean);
-  matcher?: string,
+  matcher?: PathMatcher,
   guard?: (params: Urlparams) => boolean
 }, 'domain' | 'matcher'>
 

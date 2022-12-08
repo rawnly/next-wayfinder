@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { match, pathToRegexp } from 'path-to-regexp'
 
-import type { Middleware, NextRequestWithParams, Urlparams } from "./types";
+import type { Middleware, NextRequestWithParams, PathMatcher, Urlparams } from "./types";
 
 export const parse = (req: NextRequest) => {
   const domain = req.headers.get("host") ?? "";
@@ -10,7 +10,7 @@ export const parse = (req: NextRequest) => {
   return { domain, path };
 };
 
-export const getParams = (matcher: string, pathname: string): Urlparams =>
+export const getParams = (matcher: PathMatcher, pathname: string): Urlparams =>
   (match(matcher)(pathname) as any).params ?? {}
 
 interface FindOptions {
@@ -50,7 +50,7 @@ export const getParamsDescriptor = (params: Urlparams): PropertyDescriptor => ({
 })
 
 // add the `params` key with url params to the request
-export const addParams = (request: NextRequest, matcher: string, pathname: string): NextRequestWithParams => {
+export const addParams = (request: NextRequest, matcher: PathMatcher, pathname: string): NextRequestWithParams => {
   Object.defineProperty(
     request,
     'params',
