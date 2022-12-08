@@ -3,6 +3,11 @@
     "version": "0.0.1",
     "description": "Apply multiple next.js middlewares with ease",
     "main": "build/index.js",
+    "files": [
+        "package.json",
+        "build",
+        "README.md"
+    ],
     "types": "build/index.d.ts",
     "license": "MIT",
     "keywords": [
