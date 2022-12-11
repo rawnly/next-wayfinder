@@ -24,7 +24,7 @@ This allows you to easily manage and maintain your middlewares, and keep your ap
 ## Why 
 This package was created based on [this discussion][discussion-link]. 
 In the discussion, a user highlighted the difficulty to handle complex routing inside the 
-Next.js middleware. For instance having a `withAuth` middleware only for paths matching `/dashboard/:path*` and an i18n middleware on a subdomain.
+Next.js middleware. For instance, you might want to have a `withAuth` middleware only for paths matching `/dashboard/:path*` and an `i18n` middleware on a subdomain.
 As of now, this can be archived via ugly path checking inside a middleware matching almost all the routes.
 With `next-wayfinder` I aim to add some ease until Next will support officially multiple middleware for different matchers.
 
