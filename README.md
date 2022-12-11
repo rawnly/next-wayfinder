@@ -12,7 +12,7 @@
 </p>
 
 # Introduction 
-`next-wayfinder` is a lightweight (8kb minzipped) and flexible package that makes it easy to apply different Next.js 
+`next-wayfinder` is a lightweight (_~3kb minzipped_) and flexible package that makes it easy to apply different Next.js 
 middlewares based on the route, without having to use cumbersome and error-prone path checks. 
 This allows you to easily manage and maintain your middlewares, and keep your app clean and organized.
 
@@ -21,24 +21,44 @@ This allows you to easily manage and maintain your middlewares, and keep your ap
   npm install next-wayfinder
 ```
 
+## Why 
+This package was created based on [this discussion][discussion-link]. 
+In the discussion, a user highlighted the difficulty to handle complex routing inside the 
+Next.js middleware. For instance having a `withAuth` middleware only for paths matching `/dashboard/:path*` and an i18n middleware on a subdomain.
+As of now, this can be archived via ugly path checking inside a middleware matching almost all the routes.
+With `next-wayfinder` I aim to add some ease until Next will support officially multiple middleware for different matchers.
 
-## Example 
-You can find several examples in the `examples` folder.
 
-Below is a basic implementation:
+## Quick Start
+`next-wayfinder` exports an `handlePaths` function that can be used as middleware entry point. 
+It accepts an array of [`Middleware`](./src/types.ts) matching the route or the domain.
+
 ```ts
 // middleware.ts
 
 import { handlePaths } from 'next-wayfinder'
 import { NextResponse } from 'next/server'
 
+// the first matching middleware will be applied
 export default handlePaths([
   {
-    matcher: '/dashboard/:lang/:path*',
+    matcher: '/dashboard/:path*',
+    // additional filter 
     guard: params => params.lang === 'en',
     handler: async req => {
-      console.log(req.params) // <= params are injected by `handlePaths`
+      // url params are injected by `handlePaths`
+      // in addition to req.query
+      // this is done because you might want to handle paths 
+      // that are not available under your `app` or `pages` directory.
+      console.log(req.params) 
+      
 
+      // do some checks
+      if ( !isAuthenticated(req) ) {
+        return NextResponse.redirect('/')
+      }
+
+      // continue the request
       return NextResponse.next()
     }
   }, {
@@ -48,3 +68,34 @@ export default handlePaths([
   }
 ])
 ```
+
+### What if I want to check paths on subdomain?
+In some cases you might want to check paths on a subdomain (ie using the same project for handling both public website and the dashboard).
+This can be easily archived by passing as handler an array of middleware. This `handlePaths` iterates recursively all the items provided (even the nested ones)
+so a very high level of complexity can be "handled". Anyway to improve performance I'd recommend to keep it as simple as possible.
+
+```ts
+// middleware.ts
+
+export default handlePaths([{
+  domain: /^app\./,
+  handler: [
+    {
+      matcher: '/',
+      handler: req => NextResponse.redirect(new URL('/dashboard', req.url))
+    },
+    {
+      matcher: '/:path*',
+      handler: () => NextResponse.next(),
+    }
+  ]
+}])
+```
+
+## Authors
+This library is created by Federico Vitale - (https://github.com/rawnly)
+
+## License 
+The MIT License.
+
+[discussion-link]: https://github.com/vercel/next.js/discussions/43816#discussioncomment-4348363
