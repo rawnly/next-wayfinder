@@ -23,10 +23,10 @@ This allows you to easily manage and maintain your middlewares, and keep your ap
 
 ## Why 
 This package was created based on [this discussion][discussion-link]. 
-In the discussion, a user highlighted the difficulty to handle complex routing inside the 
+In the discussion, a user highlighted the difficulty of handling complex routing inside the 
 Next.js middleware. For instance, you might want to have a `withAuth` middleware only for paths matching `/dashboard/:path*` and an `i18n` middleware on a subdomain.
-As of now, this can be archived via ugly path checking inside a middleware matching almost all the routes.
-With `next-wayfinder` I aim to add some ease until Next will support officially multiple middleware for different matchers.
+As of now, this can be achieved through ugly path checking inside a middleware that matches almost all the routes.
+With `next-wayfinder` I aim to add some ease until Next officially supports multiple middleware for different matchers.
 
 
 ## Quick Start
@@ -70,9 +70,8 @@ export default handlePaths([
 ```
 
 ### What if I want to check paths on subdomain?
-In some cases you might want to check paths on a subdomain (ie using the same project for handling both public website and the dashboard).
-This can be easily archived by passing as handler an array of middleware. This `handlePaths` iterates recursively all the items provided (even the nested ones)
-so a very high level of complexity can be "handled". Anyway to improve performance I'd recommend to keep it as simple as possible.
+In some cases, you might want to check paths on a subdomain (i.e., using the same project for handling both the public website and the dashboard).
+This can be easily achieved by passing an array of middleware as a handler. The `handlePaths` function iterates recursively over all the items provided (including nested ones), so a very high level of complexity can be "handled". However, to improve performance, I would recommend keeping it as simple as possible.
 
 ```ts
 // middleware.ts
