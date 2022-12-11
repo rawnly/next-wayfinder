@@ -93,7 +93,7 @@ export default handlePaths([{
 ```
 
 ## Authors
-This library is created by Federico Vitale - (https://github.com/rawnly)
+This library is created by Federico Vitale - ([@rawnly](https://github.com/rawnly))
 
 ## License 
 The MIT License.
