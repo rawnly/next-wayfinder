@@ -1,86 +1,105 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { test, expect } from 'vitest'
+import { NextRequest, NextResponse } from "next/server";
+import { test, expect } from "vitest";
 
-import { type Middleware } from '../src/types'
-import { addParams, findMiddleware, getParams } from '../src/utils'
+import { type Middleware } from "../src/types";
+import { addParams, findMiddleware, getParams } from "../src/utils";
 
+const queryForDomain = { domain: "app.acme.org", path: "/" };
 
-const queryForDomain = { domain: 'app.acme.org', path: '/' }
-
-const queryForPath = { domain: '', path: '/dashboard/it' }
+const queryForPath = { domain: "", path: "/dashboard/it" };
 const middlewares: Middleware[] = [
-  {
-    matcher: '/dashboard/:lang',
-    guard: (params) => params.lang === 'en',
-    handler: (_r) => NextResponse.next()
-  },
-  {
-    matcher: '/dashboard/:lang/:path*',
-    guard: (params) => params.lang === 'it',
-    handler: (_r) => NextResponse.next()
-  },
-  {
-    domain: d => d.startsWith('app'),
-    handler: () => NextResponse.next(),
-  }
-]
-
-test('should find the middleware with array', () => {
-  const middleware = findMiddleware([
     {
-      matcher: ['/login'],
-      handler: () => null
-    }
-  ], { ...queryForPath, path: '/login' })
+        matcher: "/dashboard/:lang",
+        guard: params => params.lang === "en",
+        handler: _r => NextResponse.next(),
+    },
+    {
+        matcher: "/dashboard/:lang/:path*",
+        guard: params => params.lang === "it",
+        handler: _r => NextResponse.next(),
+    },
+    {
+        domain: d => d.startsWith("app"),
+        handler: () => NextResponse.next(),
+    },
+    {
+        matcher: "/:path*",
+        handler: () => NextResponse.next(),
+    },
+];
 
-  expect(middleware).toBeTruthy()
-})
+test("should use the fallback middleware", () => {
+    const middleware = findMiddleware(middlewares, {
+        ...queryForPath,
+        path: "/abc",
+    });
 
-test('should find the middleware with string', () => {
-  const middleware = findMiddleware(middlewares, queryForPath)
+    expect(middleware).toBeDefined();
+    expect(middleware?.matcher).toEqual("/:path*");
+});
 
-  expect(middleware).not.toBeUndefined()
-  expect(middleware).toHaveProperty('matcher')
+test("should find the middleware with array", () => {
+    const middleware = findMiddleware(
+        [
+            {
+                matcher: ["/login"],
+                handler: () => null,
+            },
+        ],
+        { ...queryForPath, path: "/login" }
+    );
 
-  if (!middleware?.matcher) return
+    expect(middleware).toBeTruthy();
+});
 
-  expect(middleware.guard?.({ lang: 'it' })).toBe(true)
+test("should find the middleware with string", () => {
+    const middleware = findMiddleware(middlewares, queryForPath);
 
+    expect(middleware).not.toBeUndefined();
+    expect(middleware).toHaveProperty("matcher");
 
-  const m2 = findMiddleware(middlewares, queryForDomain)
+    if (!middleware?.matcher) return;
 
-  expect(m2).not.toBeUndefined()
-  expect(m2).not.toHaveProperty('matcher')
-  expect(m2).toHaveProperty('domain')
-})
+    expect(middleware.guard?.({ lang: "it" })).toBe(true);
 
-test('should retrive the params', () => {
-  const middleware = findMiddleware(middlewares, queryForPath)
+    const m2 = findMiddleware(middlewares, queryForDomain);
 
-  expect(middleware).not.toBeUndefined()
-  expect(middleware).toHaveProperty('matcher')
+    expect(m2).not.toBeUndefined();
+    expect(m2).not.toHaveProperty("matcher");
+    expect(m2).toHaveProperty("domain");
+});
 
-  if (!middleware?.matcher) return
+test("should retrive the params", () => {
+    const middleware = findMiddleware(middlewares, queryForPath);
 
-  const params = getParams(middleware.matcher, '/dashboard/it')
+    expect(middleware).not.toBeUndefined();
+    expect(middleware).toHaveProperty("matcher");
 
-  expect(params).toHaveProperty('lang')
-  expect(params.lang).toBe('it')
-})
+    if (!middleware?.matcher) return;
 
-test('should add the params', () => {
-  const middleware = findMiddleware(middlewares, queryForPath)
+    const params = getParams(middleware.matcher, "/dashboard/it");
 
-  expect(middleware).not.toBeUndefined()
-  expect(middleware).toHaveProperty('matcher')
+    expect(params).toHaveProperty("lang");
+    expect(params.lang).toBe("it");
+});
 
-  if (!middleware?.matcher) return
+test("should add the params", () => {
+    const middleware = findMiddleware(middlewares, queryForPath);
 
-  const request = new NextRequest(new URL('http://localhost:3000'))
-  const requestWithParams = addParams(request, middleware.matcher, '/dashboard/it')
+    expect(middleware).not.toBeUndefined();
+    expect(middleware).toHaveProperty("matcher");
 
-  expect(requestWithParams).toHaveProperty('params')
-  expect(requestWithParams.params).toHaveProperty('lang')
-  expect(requestWithParams.params).not.toHaveProperty('path')
-  expect(requestWithParams.params.lang).toBe('it')
-})
+    if (!middleware?.matcher) return;
+
+    const request = new NextRequest(new URL("http://localhost:3000"));
+    const requestWithParams = addParams(
+        request,
+        middleware.matcher,
+        "/dashboard/it"
+    );
+
+    expect(requestWithParams).toHaveProperty("params");
+    expect(requestWithParams.params).toHaveProperty("lang");
+    expect(requestWithParams.params).not.toHaveProperty("path");
+    expect(requestWithParams.params.lang).toBe("it");
+});
