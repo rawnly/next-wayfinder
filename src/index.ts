@@ -15,15 +15,15 @@ interface WayfinderOptions {
 
 export function handlePaths(
     middlewares: Middleware[],
-    options: WayfinderOptions
+    options?: WayfinderOptions
 ): NextMiddleware {
     return async function (req, ev) {
         const { path, domain } = parse(req);
         const middleware = findMiddleware(middlewares, { path, domain });
 
-        if (options.debug) {
-            console.debug(`Middleware ${!middleware ? "Not " : ""}Found!`);
-            console.debug(middleware);
+        if (options?.debug) {
+            console.log(`Middleware ${!middleware ? "Not " : ""}Found!`);
+            console.log(middleware);
         }
 
         if (middleware) {
