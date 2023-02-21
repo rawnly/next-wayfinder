@@ -7,7 +7,7 @@ import { addParams, findMiddleware, getParams } from "../src/utils";
 const queryForDomain = { domain: "app.acme.org", path: "/" };
 
 const queryForPath = { domain: "", path: "/dashboard/it" };
-const middlewares: Middleware[] = [
+const middlewares: Middleware<unknown>[] = [
     {
         matcher: "/dashboard/:lang",
         guard: params => params.lang === "en",
