@@ -18,7 +18,7 @@ export type {
 
 interface WayfinderOptions<T> {
     debug?: boolean;
-    injector?: (request: NextRequestWithParams<unknown>) => Promise<T> | T;
+    injector?: (request: NextRequestWithParams<T>) => Promise<T> | T;
 }
 
 export const getDomain = (request: NextRequest) => parse(request).domain;
@@ -113,7 +113,7 @@ export function handlePaths<T>(
 
                 if (options?.injector) {
                     const data = await options.injector(
-                        req as unknown as NextRequestWithParams<unknown>
+                        req as unknown as NextRequestWithParams<T>
                     );
 
                     inject<T>(data)(req as NextRequestWithParams<unknown>);
