@@ -26,6 +26,16 @@ const middlewares: Middleware[] = [
         matcher: "/:path*",
         handler: () => NextResponse.next(),
     },
+    {
+        matcher: "/events/:slug/edit",
+        redirectTo: "/dashboard/events/:slug",
+        includeOrigin: "origin",
+    },
+    {
+        matcher: "/events/:slug/edit",
+        redirectTo: "/dashboard/events/:slug",
+        includeOrigin: true,
+    },
 ];
 
 test("should use the fallback middleware", () => {
