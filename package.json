@@ -1,56 +1,56 @@
 {
-  "name": "next-wayfinder",
-  "version": "0.0.7",
-  "description": "Apply multiple next.js middlewares with ease",
-  "main": "build/index.js",
-  "files": [
-    "package.json",
-    "build",
-    "README.md"
-  ],
-  "types": "build/index.d.ts",
-  "license": "MIT",
-  "homepage": "https://github.com/Rawnly/next-wayfinder",
-  "keywords": [
-    "next",
-    "nextjs",
-    "middleware",
-    "auth",
-    "route"
-  ],
-  "author": "Federico Vitale <mail@fedevitale.dev>",
-  "contributors": [],
-  "scripts": {
-    "coverage": "vitest run -c ./config/vitest.config.ts --coverage",
-    "test": "vitest -c ./config/vitest.config.ts",
-    "build": "tsup src --config ./config/tsup.config.ts",
-    "lint-fix": "eslint src/**/*.ts --fix",
-    "lint": "eslint src/**/*.ts",
-    "dev": "tsup src --watch --config ./config/tsup.config.ts",
-    "prepublishOnly": "npm run build"
-  },
-  "devDependencies": {
-    "@types/node": "^18.11.9",
-    "@typescript-eslint/eslint-plugin": "^5.42.0",
-    "@typescript-eslint/parser": "^5.42.0",
-    "@vitest/coverage-c8": "^0.24.5",
-    "eslint": "^8.26.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-import-resolver-typescript": "^3.5.2",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-unused-imports": "^2.0.0",
-    "next": "^13.0.6",
-    "prettier": "^2.7.1",
-    "tsup": "^6.3.0",
-    "typescript": "^4.8.4",
-    "vitest": "^0.24.5",
-    "vitest-fetch-mock": "^0.2.1"
-  },
-  "peerDependencies": {
-    "next": "^13.0.6"
-  },
-  "dependencies": {
-    "path-to-regexp": "^6.2.1",
-    "type-fest": "^3.3.0"
-  }
+    "name": "next-wayfinder",
+    "version": "0.0.8",
+    "description": "Apply multiple next.js middlewares with ease",
+    "main": "build/index.js",
+    "files": [
+        "package.json",
+        "build",
+        "README.md"
+    ],
+    "types": "build/index.d.ts",
+    "license": "MIT",
+    "homepage": "https://github.com/Rawnly/next-wayfinder",
+    "keywords": [
+        "next",
+        "nextjs",
+        "middleware",
+        "auth",
+        "route"
+    ],
+    "author": "Federico Vitale <mail@fedevitale.dev>",
+    "contributors": [],
+    "scripts": {
+        "coverage": "vitest run -c ./config/vitest.config.ts --coverage",
+        "test": "vitest -c ./config/vitest.config.ts",
+        "build": "tsup src --config ./config/tsup.config.ts",
+        "lint-fix": "eslint src/**/*.ts --fix",
+        "lint": "eslint src/**/*.ts",
+        "dev": "tsup src --watch --config ./config/tsup.config.ts",
+        "prepublishOnly": "npm run build"
+    },
+    "devDependencies": {
+        "@types/node": "^18.11.9",
+        "@typescript-eslint/eslint-plugin": "^5.42.0",
+        "@typescript-eslint/parser": "^5.42.0",
+        "@vitest/coverage-c8": "^0.24.5",
+        "eslint": "^8.26.0",
+        "eslint-config-prettier": "^8.5.0",
+        "eslint-import-resolver-typescript": "^3.5.2",
+        "eslint-plugin-import": "^2.26.0",
+        "eslint-plugin-unused-imports": "^2.0.0",
+        "next": "^13.0.6",
+        "prettier": "^2.7.1",
+        "tsup": "^6.3.0",
+        "typescript": "^4.8.4",
+        "vitest": "^0.24.5",
+        "vitest-fetch-mock": "^0.2.1"
+    },
+    "peerDependencies": {
+        "next": "^13.0.6"
+    },
+    "dependencies": {
+        "path-to-regexp": "^6.2.1",
+        "type-fest": "^3.3.0"
+    }
 }

@@ -25,10 +25,10 @@ interface FindOptions {
 }
 
 // find the middleware corrisponding to the path or domain
-export function findMiddleware(
-    middlewares: Middleware[],
+export function findMiddleware<T>(
+    middlewares: Middleware<T>[],
     { path, domain }: FindOptions
-): Middleware | undefined {
+): Middleware<T> | undefined {
     return middlewares.find(m => {
         let matches = false;
 
@@ -56,19 +56,33 @@ export const getParamsDescriptor = (params: UrlParams): PropertyDescriptor => ({
     value: params,
 });
 
+export const inject =
+    <T>(value: T) =>
+    (req: NextRequestWithParams<any>) => {
+        const descriptor: PropertyDescriptor = {
+            enumerable: true,
+            writable: false,
+            value,
+        };
+
+        Object.assign(req, "injected", descriptor);
+
+        return req as unknown as NextRequestWithParams<T>;
+    };
+
 // add the `params` key with url params to the request
-export const addParams = (
+export const addParams = <T>(
     request: NextRequest,
     matcher: PathMatcher,
     pathname: string
-): NextRequestWithParams => {
+): NextRequestWithParams<T> => {
     Object.defineProperty(
         request,
         "params",
         getParamsDescriptor(getParams(matcher, pathname))
     );
 
-    return request as unknown as NextRequestWithParams;
+    return request as unknown as NextRequestWithParams<T>;
 };
 
 export const replaceValues = (pathname: string, values: UrlParams): string =>
