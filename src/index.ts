@@ -37,6 +37,15 @@ export function handlePaths<T>(
         }
 
         if (middleware) {
+            // inject data asap
+            if (options?.injector) {
+                const data = await options.injector(
+                    req as unknown as NextRequestWithParams<T>
+                );
+
+                inject<T>(data)(req as NextRequestWithParams<unknown>);
+            }
+
             if (RedirectMatcher.is(middleware)) {
                 const requestWithParams = addParams<T>(
                     req,
@@ -110,14 +119,6 @@ export function handlePaths<T>(
 
                 // on domain we can't add any param
                 Object.defineProperty(req, "params", getParamsDescriptor({}));
-
-                if (options?.injector) {
-                    const data = await options.injector(
-                        req as unknown as NextRequestWithParams<T>
-                    );
-
-                    inject<T>(data)(req as NextRequestWithParams<unknown>);
-                }
 
                 return middleware.handler(req as NextRequestWithParams<T>, ev);
             }
