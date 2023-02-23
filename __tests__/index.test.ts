@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { test, expect } from "vitest";
 
 import { type Middleware } from "../src/types";
-import { addParams, findMiddleware, getParams } from "../src/utils";
+import { addParams, findMiddleware, getParams, inject } from "../src/utils";
 
 const queryForDomain = { domain: "app.acme.org", path: "/" };
 
@@ -108,8 +108,24 @@ test("should add the params", () => {
         "/dashboard/it"
     );
 
-    expect(requestWithParams).toHaveProperty("params");
+    expect(request).toHaveProperty("params");
     expect(requestWithParams.params).toHaveProperty("lang");
     expect(requestWithParams.params).not.toHaveProperty("path");
     expect(requestWithParams.params.lang).toBe("it");
+});
+
+test("shuld inject", () => {
+    const middleware = findMiddleware(middlewares, queryForPath);
+
+    expect(middleware).not.toBeUndefined();
+    expect(middleware).toHaveProperty("matcher");
+
+    if (!middleware?.matcher) return;
+
+    const request = new NextRequest(new URL("http://localhost:3000"));
+    const injectedRequest = inject(request, { ok: true });
+
+    expect(request).toHaveProperty("injected");
+    expect(injectedRequest).toHaveProperty("injected");
+    expect(injectedRequest.injected).toHaveProperty("ok", true);
 });

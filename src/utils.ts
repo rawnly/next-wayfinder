@@ -59,7 +59,6 @@ export const getInjectorDescriptor = <T>(data: T): PropertyDescriptor => ({
     enumerable: true,
     writable: false,
     value: data,
-    get: () => data,
 });
 
 export const inject = <T>(

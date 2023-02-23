@@ -1,6 +1,7 @@
-import { UrlParams } from "@/types";
 import { NextRequest } from "next/server";
 import { test, expect } from "vitest";
+
+import { UrlParams } from "@/types";
 
 import { parse, replaceValues } from "../src/utils";
 
