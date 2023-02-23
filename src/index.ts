@@ -1,6 +1,6 @@
 import { NextMiddleware, NextRequest, NextResponse } from "next/server";
 
-import { Middleware, NextRequestWithParams, RedirectMatcher } from "./types";
+import { Middleware, NextRequestWithParams } from "./types";
 import {
     parse,
     findMiddleware,
@@ -43,25 +43,58 @@ export function handlePaths<T>(
                     req as unknown as NextRequestWithParams<T>
                 );
 
-                inject<T>(data)(req as NextRequestWithParams<unknown>);
+                if (options.debug) {
+                    console.debug(`[Injector] >> Injecting: `, data);
+                }
+
+                inject(req, data);
+
+                if (options.debug) {
+                    console.debug(
+                        `[Injector] >> Injected: `,
+                        (req as NextRequestWithParams<T>).injected
+                    );
+                }
             }
 
-            if (RedirectMatcher.is(middleware)) {
+            if (
+                Middleware.isRewrite(middleware) ||
+                Middleware.isRedirect(middleware)
+            ) {
                 const requestWithParams = addParams<T>(
                     req,
                     middleware.matcher,
                     path
                 );
 
-                const pathname =
-                    middleware.redirectTo instanceof Function
-                        ? middleware.redirectTo(requestWithParams)
-                        : replaceValues(
-                              middleware.redirectTo,
-                              requestWithParams.params
-                          );
+                let pathname = "";
+
+                if (Middleware.isRedirect(middleware)) {
+                    pathname =
+                        middleware.redirectTo instanceof Function
+                            ? middleware.redirectTo(requestWithParams)
+                            : replaceValues(
+                                  middleware.redirectTo,
+                                  requestWithParams.params
+                              );
+                }
+
+                if (Middleware.isRewrite(middleware)) {
+                    pathname =
+                        middleware.rewriteTo instanceof Function
+                            ? middleware.rewriteTo(requestWithParams)
+                            : replaceValues(
+                                  middleware.rewriteTo,
+                                  requestWithParams.params
+                              );
+                }
+
                 const url = requestWithParams.nextUrl.clone();
                 url.pathname = pathname;
+
+                if (Middleware.isRewrite(middleware)) {
+                    return NextResponse.rewrite(url);
+                }
 
                 if (middleware.includeOrigin) {
                     url.searchParams.set(

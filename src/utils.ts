@@ -5,7 +5,6 @@ import {
     Middleware,
     NextRequestWithParams,
     PathMatcher,
-    RedirectMatcher,
     UrlParams,
 } from "./types";
 
@@ -32,7 +31,7 @@ export function findMiddleware<T>(
     return middlewares.find(m => {
         let matches = false;
 
-        if (m.matcher || RedirectMatcher.is(m)) {
+        if (m.matcher || Middleware.isRewrite(m) || Middleware.isRedirect(m)) {
             matches = pathToRegexp(m.matcher).test(path);
 
             if (m.guard && m.matcher) {
@@ -56,19 +55,21 @@ export const getParamsDescriptor = (params: UrlParams): PropertyDescriptor => ({
     value: params,
 });
 
-export const inject =
-    <T>(value: T) =>
-    (req: NextRequestWithParams<any>) => {
-        const descriptor: PropertyDescriptor = {
-            enumerable: true,
-            writable: false,
-            value,
-        };
+export const getInjectorDescriptor = <T>(data: T): PropertyDescriptor => ({
+    enumerable: true,
+    writable: false,
+    value: data,
+    get: () => data,
+});
 
-        Object.assign(req, "injected", descriptor);
+export const inject = <T>(
+    request: NextRequest,
+    data?: T
+): NextRequestWithParams<T> => {
+    Object.defineProperty(request, "injected", getInjectorDescriptor(data));
 
-        return req as unknown as NextRequestWithParams<T>;
-    };
+    return request as unknown as NextRequestWithParams<T>;
+};
 
 // add the `params` key with url params to the request
 export const addParams = <T>(

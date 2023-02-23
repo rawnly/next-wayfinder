@@ -34,7 +34,8 @@ export type Middleware<T> =
           },
           "domain" | "matcher"
       >
-    | RedirectMatcher<T>;
+    | RedirectMatcher<T>
+    | RewriteMatcher<T>;
 
 interface RedirectMatcher<T> {
     matcher: PathMatcher;
@@ -43,7 +44,17 @@ interface RedirectMatcher<T> {
     includeOrigin?: string | boolean;
 }
 
-export const RedirectMatcher = {
-    is: <T>(middleware: Middleware<T>): middleware is RedirectMatcher<T> =>
-        "redirectTo" in middleware,
+interface RewriteMatcher<T> {
+    matcher: PathMatcher;
+    guard?: (params: UrlParams) => boolean;
+    rewriteTo: string | ((req: NextRequestWithParams<T>) => string);
+}
+
+export const Middleware = {
+    isRewrite: <T>(
+        middleware: Middleware<T>
+    ): middleware is RewriteMatcher<T> => "rewriteTo" in middleware,
+    isRedirect: <T>(
+        middleware: Middleware<T>
+    ): middleware is RedirectMatcher<T> => "redirectTo" in middleware,
 };
