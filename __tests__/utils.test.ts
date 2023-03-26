@@ -1,6 +1,7 @@
-import { UrlParams } from "@/types";
 import { NextRequest } from "next/server";
 import { test, expect } from "vitest";
+
+import { UrlParams } from "@/types";
 
 import { parse, replaceValues } from "../src/utils";
 
@@ -12,7 +13,7 @@ test("should parse next url", () => {
 
     expect(data).toStrictEqual({
         path: "/",
-        domain: "google.com",
+        hostname: "google.com",
     });
 });
 

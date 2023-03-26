@@ -2,11 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { test, expect } from "vitest";
 
 import { type Middleware } from "../src/types";
-import { addParams, findMiddleware, getParams } from "../src/utils";
+import {
+    addParams,
+    findMiddleware,
+    getParams,
+    RequestParser,
+} from "../src/utils";
 
-const queryForDomain = { domain: "app.acme.org", path: "/" };
+const queryForHostname: ReturnType<RequestParser> = {
+    hostname: "app.acme.org",
+    path: "/",
+};
 
-const queryForPath = { domain: "", path: "/dashboard/it" };
+const queryForPath: ReturnType<RequestParser> = {
+    hostname: "",
+    path: "/dashboard/it",
+};
+
 const middlewares: Middleware<unknown>[] = [
     {
         path: "/dashboard/:lang",
@@ -75,24 +87,24 @@ test("should find the middleware with string", () => {
     const middleware = findMiddleware(middlewares, queryForPath);
 
     expect(middleware).not.toBeUndefined();
-    expect(middleware).toHaveProperty("matcher");
+    expect(middleware).toHaveProperty("path");
 
     if (!middleware?.path) return;
 
     expect(middleware.filter?.({ lang: "it" })).toBe(true);
 
-    const m2 = findMiddleware(middlewares, queryForDomain);
+    const m2 = findMiddleware(middlewares, queryForHostname);
 
     expect(m2).not.toBeUndefined();
-    expect(m2).not.toHaveProperty("matcher");
-    expect(m2).toHaveProperty("domain");
+    expect(m2).not.toHaveProperty("path");
+    expect(m2).toHaveProperty("hostname");
 });
 
 test("should retrive the params", () => {
     const middleware = findMiddleware(middlewares, queryForPath);
 
     expect(middleware).not.toBeUndefined();
-    expect(middleware).toHaveProperty("matcher");
+    expect(middleware).toHaveProperty("path");
 
     if (!middleware?.path) return;
 
@@ -106,7 +118,7 @@ test("should add the params", () => {
     const middleware = findMiddleware(middlewares, queryForPath);
 
     expect(middleware).not.toBeUndefined();
-    expect(middleware).toHaveProperty("matcher");
+    expect(middleware).toHaveProperty("path");
 
     if (!middleware?.path) return;
 
