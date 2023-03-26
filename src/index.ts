@@ -27,7 +27,7 @@ export function handlePaths<T>(
     middlewares: Middleware<T>[],
     options?: WayfinderOptions<T>
 ): NextMiddleware {
-    return async function (req, ev) {
+    return async function(req, ev) {
         const { path, domain } = parse(req);
         const middleware = findMiddleware(middlewares, { path, domain });
 
@@ -74,9 +74,9 @@ export function handlePaths<T>(
                         middleware.redirectTo instanceof Function
                             ? middleware.redirectTo(requestWithParams)
                             : replaceValues(
-                                  middleware.redirectTo,
-                                  requestWithParams.params
-                              );
+                                middleware.redirectTo,
+                                requestWithParams.params
+                            );
                 }
 
                 if (Middleware.isRewrite(middleware)) {
@@ -84,9 +84,9 @@ export function handlePaths<T>(
                         middleware.rewriteTo instanceof Function
                             ? middleware.rewriteTo(requestWithParams)
                             : replaceValues(
-                                  middleware.rewriteTo,
-                                  requestWithParams.params
-                              );
+                                middleware.rewriteTo,
+                                requestWithParams.params
+                            );
                 }
 
                 const url = requestWithParams.nextUrl.clone();

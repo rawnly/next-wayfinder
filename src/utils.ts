@@ -90,9 +90,9 @@ export const replaceValues = (pathname: string, values: UrlParams): string =>
         (acc, [key, val]) =>
             val
                 ? acc.replace(
-                      `:${key}`,
-                      Array.isArray(val) ? val.join("/") : val
-                  )
+                    `:${key}`,
+                    Array.isArray(val) ? val.join("/") : val
+                )
                 : acc,
         pathname
     );

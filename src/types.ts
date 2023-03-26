@@ -19,21 +19,21 @@ type MaybePromise<T> = T | Promise<T>;
 
 export type Middleware<T> =
     | RequireExactlyOne<
-          {
-              handler: NextMiddlewareWithParams<T> | Middleware<T>[];
-              domain?: RegExp | ((domain: string) => boolean);
-              matcher?: PathMatcher;
-              guard?: (params: UrlParams) => boolean;
-              pre?: (request: NextRequestWithParams<T>) => MaybePromise<
-                  | boolean
-                  | {
-                        redirectTo: string | URL;
-                        statusCode?: number;
-                    }
-              >;
-          },
-          "domain" | "matcher"
-      >
+        {
+            handler: NextMiddlewareWithParams<T> | Middleware<T>[];
+            domain?: RegExp | ((domain: string) => boolean);
+            matcher?: PathMatcher;
+            guard?: (params: UrlParams) => boolean;
+            pre?: (request: NextRequestWithParams<T>) => MaybePromise<
+                | boolean
+                | {
+                    redirectTo: string | URL;
+                    statusCode?: number;
+                }
+            >;
+        },
+        "domain" | "matcher"
+    >
     | RedirectMatcher<T>
     | RewriteMatcher<T>;
 
