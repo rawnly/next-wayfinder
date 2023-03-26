@@ -1,5 +1,4 @@
 import { NextMiddleware, NextRequest, NextResponse } from "next/server";
-import { match, P } from "ts-pattern";
 
 import { Middleware, NextRequestWithParams, RedirectMatcher } from "./types";
 import {
