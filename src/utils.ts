@@ -31,7 +31,7 @@ interface FindOptions {
     path: string;
 }
 
-// find the middleware corrisponding to the path or domain
+// find the middleware corrisponding to the path or hostname
 export function findMiddleware<T>(
     middlewares: Middleware<T>[],
     { path, hostname }: FindOptions
@@ -50,7 +50,7 @@ export function findMiddleware<T>(
             return matches;
         }
 
-        // domain is always defined if matcher is not
+        // hostname is always defined if matcher is not
         return m.hostname instanceof RegExp
             ? m.hostname.test(hostname)
             : m.hostname?.(hostname);

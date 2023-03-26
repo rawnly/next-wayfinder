@@ -27,6 +27,37 @@ interface WayfinderOptions<T> {
 export const getHost = (request: NextRequest) =>
     defaultParser(request).hostname;
 
+/**
+ *
+ * A function that filters the requests based on the path or hostname
+ * and then executes the corresponding middleware or middlewares
+ *
+ * @param middlewares {Middleware} - An array of middlewares
+ * @param options {WayfinderOptions} - An object containing the options
+ *
+ * @returns {NextMiddleware} - A NextMiddleware function
+ *
+ * @example
+ * ```ts
+ * import { handlePaths } from "next-wayfinder";
+ *
+ * export default handlePaths([
+ *  {
+ *      path: "/dashboard/:path",
+ *      handler: async (req, ev) => {
+ *           const isAuthorized = await checkAuthorization(req);
+ *
+ *           if (!isAuthorized) {
+ *              return NextResponse.redirect("/login");
+ *           }
+ *
+ *          return NextResponse.next();
+ *      },
+ *  }
+ *]);
+ * ```
+ *
+ */
 export function handlePaths<T>(
     middlewares: Middleware<T>[],
     options?: WayfinderOptions<T>
@@ -37,7 +68,7 @@ export function handlePaths<T>(
         // extract the hostname and path from the request
         const { path, hostname } = parseRequest(req);
 
-        // find the middleware corrisponding to the path or domain
+        // find the middleware corrisponding to the path or hostname
         const middleware = findMiddleware(middlewares, {
             path,
             hostname,
@@ -81,57 +112,50 @@ export function handlePaths<T>(
         // if the middleware handler is a function
         // we suppose it is a NextMiddleware or NextMiddlewareWithParams
         if (middleware.handler instanceof Function) {
-            if (middleware.path) {
-                // if is a path middleware
-                // add params to the request
-                const requestWithParams = addParams<T>(
-                    req,
-                    middleware.path,
-                    path
-                );
+            if (!middleware.path) {
+                // on hostname matcher we can't add any param
+                Object.defineProperty(req, "params", getParamsDescriptor({}));
 
-                if (middleware.pre) {
-                    const result = await middleware.pre(requestWithParams);
+                if (options?.injector) {
+                    const data = await options.injector(
+                        req as unknown as NextRequestWithParams<unknown>
+                    );
 
-                    if (result !== true) {
-                        if (!result) return NextResponse.next();
-
-                        if (typeof result.redirectTo === "string") {
-                            const url = requestWithParams.nextUrl.clone();
-                            url.pathname = result.redirectTo;
-
-                            return NextResponse.redirect(url, {
-                                status: result.statusCode,
-                            });
-                        }
-
-                        return NextResponse.redirect(
-                            new URL(
-                                result.redirectTo,
-                                requestWithParams.nextUrl
-                            ),
-                            {
-                                status: result.statusCode,
-                            }
-                        );
-                    }
+                    inject<T>(data)(req as NextRequestWithParams<unknown>);
                 }
 
-                return middleware.handler(requestWithParams, ev);
+                return middleware.handler(req as NextRequestWithParams<T>, ev);
             }
 
-            // on domain we can't add any param
-            Object.defineProperty(req, "params", getParamsDescriptor({}));
+            // if is a path middleware
+            // add params to the request
+            const requestWithParams = addParams<T>(req, middleware.path, path);
 
-            if (options?.injector) {
-                const data = await options.injector(
-                    req as unknown as NextRequestWithParams<unknown>
-                );
+            if (middleware.pre) {
+                const result = await middleware.pre(requestWithParams);
 
-                inject<T>(data)(req as NextRequestWithParams<unknown>);
+                if (result !== true) {
+                    if (!result) return NextResponse.next();
+
+                    if (typeof result.redirectTo === "string") {
+                        const url = requestWithParams.nextUrl.clone();
+                        url.pathname = result.redirectTo;
+
+                        return NextResponse.redirect(url, {
+                            status: result.statusCode,
+                        });
+                    }
+
+                    return NextResponse.redirect(
+                        new URL(result.redirectTo, requestWithParams.nextUrl),
+                        {
+                            status: result.statusCode,
+                        }
+                    );
+                }
             }
 
-            return middleware.handler(req as NextRequestWithParams<T>, ev);
+            return middleware.handler(requestWithParams, ev);
         }
 
         // if the handler is an array of middlewares
