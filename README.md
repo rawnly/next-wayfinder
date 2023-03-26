@@ -34,7 +34,7 @@ With `next-wayfinder` I aim to add some ease until Next officially supports mult
 ## Quick Start
 
 `next-wayfinder` exports an `handlePaths` function that can be used as middleware entry point.
-It accepts an array of [`Middleware`](./src/types.ts) matching the route or the domain.
+It accepts an array of [`Middleware`](./src/types.ts) matching the route or the hostname.
 
 ```ts
 // middleware.ts
@@ -46,7 +46,7 @@ import { NextResponse } from "next/server";
 export default handlePaths(
     [
         {
-            matcher: "/dashboard/:lang/:path*",
+            path: "/dashboard/:lang/:path*",
             // We can filter this to apply only if some params matches exactly our needs
             guard: params => params.lang === "en",
             handler: async req => {
@@ -66,8 +66,8 @@ export default handlePaths(
             },
         },
         {
-            domain: /^app\./,
-            // rewrites all routes on domain app.* to the `pages/app/<path>`
+            hostname: /^app\./,
+            // rewrites all routes on hostname app.* to the `pages/app/<path>`
             handler: req =>
                 NextResponse.rewrite(
                     new URL("/app${req.nextUrl.pathname}", req.url)
@@ -75,7 +75,7 @@ export default handlePaths(
         },
         {
             // easy syntax for redirects
-            matcher: "/blog/:slug/edit",
+            path: "/blog/:slug/edit",
             // params will be replaced automatically
             redirectTo: "/dashboard/posts/:slug",
         },
@@ -85,6 +85,12 @@ export default handlePaths(
         // inject custom data, like session etc
         // it will be available inside `req.injected`
         injector: async request => ({ isLoggedIn: !!req.session }),
+
+        // optional, a default will be provided as following
+        parser: request => ({
+            hostname: request.headers.get("host") ?? "",
+            path: request.nextUrl.pathname,
+        }),
     }
 );
 ```
@@ -92,22 +98,25 @@ export default handlePaths(
 ### What if I want to check paths on subdomain?
 
 In some cases, you might want to check paths on a subdomain (i.e., using the same project for handling both the public website and the dashboard).
-This can be easily achieved by passing an array of middleware as a handler. The `handlePaths` function iterates recursively over all the items provided (including nested ones), so a very high level of complexity can be "handled". However, to improve performance, I would recommend keeping it as simple as possible.
+This can be easily achieved since `hanldePaths` executes recursively.
+Simply by passing an array of middlewares as a handler.
+The `handlePaths` function iterates over all the items provided (including nested ones), so a very high level of complexity can be "handled".
+However, to improve performance, I would recommend keeping it as simple as possible.
 
 ```ts
 // middleware.ts
 
 export default handlePaths([
     {
-        domain: /^app\./,
+        hostname: /^app\./,
         handler: [
             {
-                matcher: "/",
+                path: "/",
                 handler: req =>
                     NextResponse.redirect(new URL("/dashboard", req.url)),
             },
             {
-                matcher: "/:path*",
+                path: "/:path*",
                 handler: () => NextResponse.next(),
             },
         ],
@@ -144,7 +153,7 @@ export default handlePaths(
     [
         {
             // auth guard
-            matcher: "/dashboard/:path*",
+            path: "/dashboard/:path*",
             pre: req =>
                 req.injected?.session ? true : { redirectTo: "/auth/sign-in" },
             handler: req => {
