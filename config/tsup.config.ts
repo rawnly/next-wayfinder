@@ -6,16 +6,11 @@ export default defineConfig({
 	name: pkg.name,
 	sourcemap: false,
 	minify: true,
+	target: "node16",
 	dts: true,
 	clean: true,
 	replaceNodeEnv: false,
 	format: ["esm", "cjs"],
 	outDir: "build",
 	tsconfig: "./tsconfig.build.json",
-	loader: {
-		".js": "jsx",
-	},
-	env: {
-		/** your env here */
-	},
 });

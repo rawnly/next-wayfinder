@@ -14,6 +14,7 @@ specifiers:
   path-to-regexp: ^6.2.1
   prettier: ^2.7.1
   ts-mockito: ^2.6.1
+  ts-pattern: ^4.2.2
   tsup: ^6.3.0
   type-fest: ^3.3.0
   typescript: ^4.8.4
@@ -22,8 +23,7 @@ specifiers:
 
 dependencies:
   path-to-regexp: 6.2.1
-  ts-mockito: 2.6.1
-  type-fest: 3.3.0
+  ts-pattern: 4.2.2
 
 devDependencies:
   '@types/node': 18.11.9
@@ -37,7 +37,9 @@ devDependencies:
   eslint-plugin-unused-imports: 2.0.0_ajidtrfjdn3twdrkbqcn2yjcxu
   next: 13.0.6
   prettier: 2.7.1
+  ts-mockito: 2.6.1
   tsup: 6.3.0_typescript@4.8.4
+  type-fest: 3.3.0
   typescript: 4.8.4
   vitest: 0.24.5
   vitest-fetch-mock: 0.2.1_vitest@0.24.5
@@ -1850,7 +1852,7 @@ packages:
 
   /lodash/4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
-    dev: false
+    dev: true
 
   /loupe/2.3.4:
     resolution: {integrity: sha512-OvKfgCC2Ndby6aSTREl5aCCPTNIzlDfQZvZxNUrBrihDhL3xcrYegTblhmEiCrg2kKQz4XsFIaemE5BF4ybSaQ==}
@@ -2510,6 +2512,10 @@ packages:
     resolution: {integrity: sha512-qU9m/oEBQrKq5hwfbJ7MgmVN5Gu6lFnIGWvpxSjrqq6YYEVv+RwVFWySbZMBgazsWqv6ctAyVBpo9TmAxnOEKw==}
     dependencies:
       lodash: 4.17.21
+    dev: true
+
+  /ts-pattern/4.2.2:
+    resolution: {integrity: sha512-qzJMo2pbkUJWusRH5o8xR+xogn6RmvViyUgwBFTtRENLse470clCGjHDf6haWGZ1AOmk8XkEohUoBW8Uut6Scg==}
     dev: false
 
   /tsconfig-paths/3.14.1:
@@ -2595,7 +2601,7 @@ packages:
   /type-fest/3.3.0:
     resolution: {integrity: sha512-gezeeOIZyQLGW5uuCeEnXF1aXmtt2afKspXz3YqoOcZ3l/YMJq1pujvgT+cz/Nw1O/7q/kSav5fihJHsC/AOUg==}
     engines: {node: '>=14.16'}
-    dev: false
+    dev: true
 
   /typescript/4.8.4:
     resolution: {integrity: sha512-QCh+85mCy+h0IGff8r5XWzOVSbBO+KfeYrMQh7NJ58QujwcE22u+NUSmUxqF+un70P9GXKxa2HCNiTTMJknyjQ==}

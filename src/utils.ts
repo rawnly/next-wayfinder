@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { match, pathToRegexp } from "path-to-regexp";
 
 import {
+    HostnameCheck,
     Middleware,
     NextRequestWithParams,
     PathMatcher,
@@ -24,6 +25,26 @@ interface FindOptions {
     path: string;
 }
 
+/**
+ *
+ * checks if the given hostnamecheck matches the given hostname
+ */
+const checkHostName = (a: HostnameCheck, b: string): boolean => {
+    if (typeof a === "string") {
+        return a === b;
+    }
+
+    if (a instanceof RegExp) {
+        return a.test(b);
+    }
+
+    if (a instanceof Function) {
+        return a(b);
+    }
+
+    return false;
+};
+
 // find the middleware corrisponding to the path or domain
 export function findMiddleware<T>(
     middlewares: Middleware<T>[],
@@ -32,20 +53,21 @@ export function findMiddleware<T>(
     return middlewares.find(m => {
         let matches = false;
 
-        if (m.path || Middleware.isRewrite(m) || Middleware.isRedirect(m)) {
-            matches = pathToRegexp(m.path).test(path);
-
-            if (m.guard && m.path) {
-                return matches && m.guard(getParams(m.path, path));
+        if (Middleware.isHostname(m)) {
+            if (Array.isArray(m.hostname)) {
+                return m.hostname.some(check => checkHostName(check, hostname));
             }
 
-            return matches;
+            return checkHostName(m.hostname, hostname);
         }
 
-        // domain is always defined if path is not
-        return m.hostname instanceof RegExp
-            ? m.hostname.test(hostname)
-            : m.hostname?.(hostname);
+        matches = pathToRegexp(m.path).test(path);
+
+        if (m.guard && m.path) {
+            return matches && m.guard(getParams(m.path, path));
+        }
+
+        return matches;
     });
 }
 

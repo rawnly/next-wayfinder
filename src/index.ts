@@ -1,4 +1,5 @@
 import { NextMiddleware, NextRequest, NextResponse } from "next/server";
+import { match } from "ts-pattern";
 
 import {
     Middleware,
@@ -104,6 +105,7 @@ export function handlePaths<T>(
                 console.debug(`[Injector] >> Injecting: `, data);
             }
 
+            // inject data as req.params
             inject(req, data);
 
             if (options.debug) {
@@ -120,30 +122,25 @@ export function handlePaths<T>(
         ) {
             const requestWithParams = addParams<T>(req, middleware.path, path);
 
-            let pathname = "";
-
-            if (Middleware.isRedirect(middleware)) {
-                pathname =
+            const url = requestWithParams.nextUrl.clone();
+            url.pathname = match(middleware)
+                .when(Middleware.isRedirect, middleware =>
                     middleware.redirectTo instanceof Function
                         ? middleware.redirectTo(requestWithParams)
                         : replaceValues(
                             middleware.redirectTo,
                             requestWithParams.params
-                        );
-            }
-
-            if (Middleware.isRewrite(middleware)) {
-                pathname =
+                        )
+                )
+                .when(Middleware.isRewrite, middleware =>
                     middleware.rewriteTo instanceof Function
                         ? middleware.rewriteTo(requestWithParams)
                         : replaceValues(
                             middleware.rewriteTo,
                             requestWithParams.params
-                        );
-            }
-
-            const url = requestWithParams.nextUrl.clone();
-            url.pathname = pathname;
+                        )
+                )
+                .otherwise(() => "");
 
             if (Middleware.isRewrite(middleware)) {
                 return NextResponse.rewrite(url);
@@ -166,7 +163,7 @@ export function handlePaths<T>(
             return handlePaths(middleware.handler, options)(req, ev);
         }
 
-        if (!middleware.path) {
+        if (Middleware.isHostname(middleware)) {
             // on hostname middleware we can't add any param
             Object.defineProperty(req, "params", getParamsDescriptor({}));
 
@@ -177,7 +174,7 @@ export function handlePaths<T>(
         // add extracted params to the request
         const requestWithParams = addParams<T>(req, middleware.path, path);
 
-        // apply pre-checks
+        // execute pre-checks
         if (middleware.pre) {
             const result = await middleware.pre(requestWithParams);
 
