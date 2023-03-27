@@ -1,8 +1,13 @@
 import { NextMiddleware, NextRequest, NextResponse } from "next/server";
 
-import { Middleware, NextRequestWithParams } from "./types";
 import {
-    parse,
+    Middleware,
+    NextRequestWithParams,
+    RequestInjector,
+    RequestParser,
+} from "./types";
+import {
+    parse as defaultParse,
     findMiddleware,
     addParams,
     getParamsDescriptor,
@@ -18,150 +23,186 @@ export type {
 
 interface WayfinderOptions<T> {
     debug?: boolean;
-    injector?: (request: NextRequestWithParams<T>) => Promise<T> | T;
+
+    /**
+     *
+     * A function that returns the data to be injected into the request
+     */
+    injector?: RequestInjector<T>;
+
+    /**
+     *
+     * A function to extract `hostname` and `pathname` from `NextRequest`
+     */
+    parser?: RequestParser;
 }
 
-export const getDomain = (request: NextRequest) => parse(request).domain;
+export const getHost = (request: NextRequest) => defaultParse(request).hostname;
 
+/**
+ *
+ * A function that filters the requests based on the path or hostname
+ * and then executes the corresponding middleware or middlewares
+ *
+ * @param middlewares {Middleware} - An array of middlewares
+ * @param options {WayfinderOptions} - An object containing the options
+ *
+ * @returns {NextMiddleware} - A NextMiddleware function
+ *
+ * @example
+ * ```ts
+ * import { handlePaths } from "next-wayfinder";
+ *
+ * export default handlePaths([
+ *  {
+ *      path: "/dashboard/:path",
+ *      handler: async (req, ev) => {
+ *           const isAuthorized = await checkAuthorization(req);
+ *
+ *           if (!isAuthorized) {
+ *              return NextResponse.redirect("/login");
+ *           }
+ *
+ *          return NextResponse.next();
+ *      },
+ *  }
+ *]);
+ * ```
+ *
+ */
 export function handlePaths<T>(
     middlewares: Middleware<T>[],
     options?: WayfinderOptions<T>
 ): NextMiddleware {
     return async function(req, ev) {
-        const { path, domain } = parse(req);
-        const middleware = findMiddleware(middlewares, { path, domain });
+        const { pathname: path, hostname } = (options?.parser ?? defaultParse)(
+            req
+        );
+
+        const middleware = findMiddleware(middlewares, {
+            path: path,
+            hostname,
+        });
 
         if (options?.debug) {
             console.debug(`Middleware ${!middleware ? "Not " : ""}Found!`);
             if (middleware) console.debug(middleware);
         }
 
-        if (middleware) {
-            // inject data asap
-            if (options?.injector) {
-                const data = await options.injector(
-                    req as unknown as NextRequestWithParams<T>
+        // if no middleware is found then continue the response pipe
+        if (!middleware) {
+            return NextResponse.next();
+        }
+
+        // inject data asap
+        if (options?.injector) {
+            const data = await options.injector(
+                req as unknown as NextRequestWithParams<T>
+            );
+
+            if (options.debug) {
+                console.debug(`[Injector] >> Injecting: `, data);
+            }
+
+            inject(req, data);
+
+            if (options.debug) {
+                console.debug(
+                    `[Injector] >> Injected: `,
+                    (req as NextRequestWithParams<T>).injected
                 );
+            }
+        }
 
-                if (options.debug) {
-                    console.debug(`[Injector] >> Injecting: `, data);
-                }
+        if (
+            Middleware.isRewrite(middleware) ||
+            Middleware.isRedirect(middleware)
+        ) {
+            const requestWithParams = addParams<T>(req, middleware.path, path);
 
-                inject(req, data);
+            let pathname = "";
 
-                if (options.debug) {
-                    console.debug(
-                        `[Injector] >> Injected: `,
-                        (req as NextRequestWithParams<T>).injected
-                    );
-                }
+            if (Middleware.isRedirect(middleware)) {
+                pathname =
+                    middleware.redirectTo instanceof Function
+                        ? middleware.redirectTo(requestWithParams)
+                        : replaceValues(
+                            middleware.redirectTo,
+                            requestWithParams.params
+                        );
             }
 
-            if (
-                Middleware.isRewrite(middleware) ||
-                Middleware.isRedirect(middleware)
-            ) {
-                const requestWithParams = addParams<T>(
-                    req,
-                    middleware.matcher,
-                    path
+            if (Middleware.isRewrite(middleware)) {
+                pathname =
+                    middleware.rewriteTo instanceof Function
+                        ? middleware.rewriteTo(requestWithParams)
+                        : replaceValues(
+                            middleware.rewriteTo,
+                            requestWithParams.params
+                        );
+            }
+
+            const url = requestWithParams.nextUrl.clone();
+            url.pathname = pathname;
+
+            if (Middleware.isRewrite(middleware)) {
+                return NextResponse.rewrite(url);
+            }
+
+            if (middleware.includeOrigin) {
+                url.searchParams.set(
+                    middleware.includeOrigin === true
+                        ? "origin"
+                        : middleware.includeOrigin,
+                    requestWithParams.nextUrl.pathname
                 );
-
-                let pathname = "";
-
-                if (Middleware.isRedirect(middleware)) {
-                    pathname =
-                        middleware.redirectTo instanceof Function
-                            ? middleware.redirectTo(requestWithParams)
-                            : replaceValues(
-                                middleware.redirectTo,
-                                requestWithParams.params
-                            );
-                }
-
-                if (Middleware.isRewrite(middleware)) {
-                    pathname =
-                        middleware.rewriteTo instanceof Function
-                            ? middleware.rewriteTo(requestWithParams)
-                            : replaceValues(
-                                middleware.rewriteTo,
-                                requestWithParams.params
-                            );
-                }
-
-                const url = requestWithParams.nextUrl.clone();
-                url.pathname = pathname;
-
-                if (Middleware.isRewrite(middleware)) {
-                    return NextResponse.rewrite(url);
-                }
-
-                if (middleware.includeOrigin) {
-                    url.searchParams.set(
-                        middleware.includeOrigin === true
-                            ? "origin"
-                            : middleware.includeOrigin,
-                        requestWithParams.nextUrl.pathname
-                    );
-                }
-
-                return NextResponse.redirect(url);
             }
 
-            // if the middleware handler is a function
-            // we suppose it is a NextMiddleware or NextMiddlewareWithParams
-            if (middleware.handler instanceof Function) {
-                if (middleware.matcher) {
-                    // if is a path middleware
-                    // add params to the request
-                    const requestWithParams = addParams<T>(
-                        req,
-                        middleware.matcher,
-                        path
-                    );
+            return NextResponse.redirect(url);
+        }
 
-                    if (middleware.pre) {
-                        const result = await middleware.pre(requestWithParams);
-
-                        if (result !== true) {
-                            if (!result) return NextResponse.next();
-
-                            if (typeof result.redirectTo === "string") {
-                                const url = requestWithParams.nextUrl.clone();
-                                url.pathname = result.redirectTo;
-
-                                return NextResponse.redirect(url, {
-                                    status: result.statusCode,
-                                });
-                            }
-
-                            return NextResponse.redirect(
-                                new URL(
-                                    result.redirectTo,
-                                    requestWithParams.nextUrl
-                                ),
-                                {
-                                    status: result.statusCode,
-                                }
-                            );
-                        }
-                    }
-
-                    return middleware.handler(requestWithParams, ev);
-                }
-
-                // on domain we can't add any param
-                Object.defineProperty(req, "params", getParamsDescriptor({}));
-
-                return middleware.handler(req as NextRequestWithParams<T>, ev);
-            }
-
-            // if the handler is an array of middlewares
-            // then use recursion to handle them
+        // use recursion to handle nested middlewares
+        if (Array.isArray(middleware.handler)) {
             return handlePaths(middleware.handler, options)(req, ev);
         }
 
-        // if no middleware is found then continue the response pipe
-        return NextResponse.next();
+        if (!middleware.path) {
+            // on hostname middleware we can't add any param
+            Object.defineProperty(req, "params", getParamsDescriptor({}));
+
+            return middleware.handler(req as NextRequestWithParams<T>, ev);
+        }
+
+        // if is a path-middleware
+        // add extracted params to the request
+        const requestWithParams = addParams<T>(req, middleware.path, path);
+
+        // apply pre-checks
+        if (middleware.pre) {
+            const result = await middleware.pre(requestWithParams);
+
+            if (result !== true) {
+                // skip middleware
+                if (!result) return NextResponse.next();
+
+                if (typeof result.redirectTo === "string") {
+                    const url = requestWithParams.nextUrl.clone();
+                    url.pathname = result.redirectTo;
+
+                    return NextResponse.redirect(url, {
+                        status: result.statusCode,
+                    });
+                }
+
+                return NextResponse.redirect(
+                    new URL(result.redirectTo, requestWithParams.nextUrl),
+                    {
+                        status: result.statusCode,
+                    }
+                );
+            }
+        }
+
+        return middleware.handler(requestWithParams, ev);
     };
 }

@@ -51,6 +51,7 @@
   },
   "dependencies": {
     "path-to-regexp": "^6.2.1",
+    "ts-mockito": "^2.6.1",
     "type-fest": "^3.3.0"
   }
 }

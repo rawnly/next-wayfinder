@@ -5,46 +5,47 @@ import {
     Middleware,
     NextRequestWithParams,
     PathMatcher,
+    RequestParser,
     UrlParams,
 } from "./types";
 
-export const parse = (req: NextRequest) => {
-    const domain = req.headers.get("host") ?? "";
-    const path = req.nextUrl.pathname;
+export const parse: RequestParser = req => {
+    const hostname = req.headers.get("host") ?? "";
+    const pathname = req.nextUrl.pathname;
 
-    return { domain, path };
+    return { hostname, pathname };
 };
 
 export const getParams = (matcher: PathMatcher, pathname: string): UrlParams =>
     (match(matcher)(pathname) as any).params ?? {};
 
 interface FindOptions {
-    domain: string;
+    hostname: string;
     path: string;
 }
 
 // find the middleware corrisponding to the path or domain
 export function findMiddleware<T>(
     middlewares: Middleware<T>[],
-    { path, domain }: FindOptions
+    { path, hostname }: FindOptions
 ): Middleware<T> | undefined {
     return middlewares.find(m => {
         let matches = false;
 
-        if (m.matcher || Middleware.isRewrite(m) || Middleware.isRedirect(m)) {
-            matches = pathToRegexp(m.matcher).test(path);
+        if (m.path || Middleware.isRewrite(m) || Middleware.isRedirect(m)) {
+            matches = pathToRegexp(m.path).test(path);
 
-            if (m.guard && m.matcher) {
-                return matches && m.guard(getParams(m.matcher, path));
+            if (m.guard && m.path) {
+                return matches && m.guard(getParams(m.path, path));
             }
 
             return matches;
         }
 
-        // domain is always defined if matcher is not
-        return m.domain instanceof RegExp
-            ? m.domain.test(domain)
-            : m.domain?.(domain);
+        // domain is always defined if path is not
+        return m.hostname instanceof RegExp
+            ? m.hostname.test(hostname)
+            : m.hostname?.(hostname);
     });
 }
 
@@ -53,12 +54,14 @@ export const getParamsDescriptor = (params: UrlParams): PropertyDescriptor => ({
     enumerable: true,
     writable: false,
     value: params,
+    configurable: true,
 });
 
 export const getInjectorDescriptor = <T>(data: T): PropertyDescriptor => ({
     enumerable: true,
     writable: false,
     value: data,
+    configurable: true,
 });
 
 export const inject = <T>(

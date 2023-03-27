@@ -1,4 +1,5 @@
 import { NextMiddleware, NextFetchEvent, NextRequest } from "next/server";
+import { Path } from "path-to-regexp";
 import { RequireExactlyOne } from "type-fest";
 
 export type UrlParams = Record<string, string | string[] | undefined>;
@@ -13,7 +14,22 @@ export type NextMiddlewareWithParams<T> = (
     event: NextFetchEvent
 ) => ReturnType<NextMiddleware>;
 
-export type PathMatcher = string | string[] | RegExp;
+export type PathMatcher = Path;
+
+/**
+ *
+ * A function to extract `hostname` and `pathname` from `NextRequest`
+ */
+export interface RequestParser {
+    (req: NextRequest): {
+        hostname: string;
+        pathname: string;
+    };
+}
+
+export interface RequestInjector<T> {
+    (request: NextRequestWithParams<T>): Promise<T> | T;
+}
 
 type MaybePromise<T> = T | Promise<T>;
 
@@ -21,8 +37,8 @@ export type Middleware<T> =
     | RequireExactlyOne<
         {
             handler: NextMiddlewareWithParams<T> | Middleware<T>[];
-            domain?: RegExp | ((domain: string) => boolean);
-            matcher?: PathMatcher;
+            hostname?: RegExp | ((hostname: string) => boolean);
+            path?: PathMatcher;
             guard?: (params: UrlParams) => boolean;
             pre?: (request: NextRequestWithParams<T>) => MaybePromise<
                 | boolean
@@ -32,20 +48,20 @@ export type Middleware<T> =
                 }
             >;
         },
-        "domain" | "matcher"
+        "path" | "hostname"
     >
     | RedirectMatcher<T>
     | RewriteMatcher<T>;
 
 interface RedirectMatcher<T> {
-    matcher: PathMatcher;
+    path: PathMatcher;
     guard?: (params: UrlParams) => boolean;
     redirectTo: string | ((req: NextRequestWithParams<T>) => string);
     includeOrigin?: string | boolean;
 }
 
 interface RewriteMatcher<T> {
-    matcher: PathMatcher;
+    path: PathMatcher;
     guard?: (params: UrlParams) => boolean;
     rewriteTo: string | ((req: NextRequestWithParams<T>) => string);
 }
