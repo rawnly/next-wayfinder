@@ -13,9 +13,15 @@
 
 # Introduction
 
-`next-wayfinder` is a lightweight (_~3kb minzipped_) and flexible package that makes it easy to apply different Next.js
-middlewares based on the route, without having to use cumbersome and error-prone path checks.
-This allows you to easily manage and maintain your middlewares, and keep your app clean and organized.
+`next-wayfinder` is a lightweight (_~3kb minzipped_) and flexible package that simplifies the organization of middleware in Next.js applications.
+With `next-wayfinder`, you can easily apply different middlewares based on the route or hostname, without having to use cumbersome and error-prone path checks.
+
+Traditionally, managing middleware in Next.js can be challenging, especially when dealing with complex routing scenarios.
+For example, you may want to apply an authentication middleware only for certain paths or a subdomain-specific middleware for certain hostnames.
+With `next-wayfinder`, you can easily manage and maintain your middleware and keep your code clean and organized.
+`next-wayfinder` exports an `handlePaths` function that can be used as middleware entry point.
+It accepts an array of `Middleware` objects that match the route or hostname, and applies the first matching middleware.
+This allows you to easily handle complex routing scenarios and reduce the amount of code needed to manage your middleware.
 
 ## Installation
 
@@ -25,16 +31,19 @@ This allows you to easily manage and maintain your middlewares, and keep your ap
 
 ## Why
 
-This package was created based on [this discussion][discussion-link].
-In the discussion, a user highlighted the difficulty of handling complex routing inside the
-Next.js middleware. For instance, you might want to have a `withAuth` middleware only for paths matching `/dashboard/:path*` and an `i18n` middleware on a subdomain.
+`next-wayfinder` was created based on [this discussion][discussion-link] that highlighted the difficulty of handling complex routing inside the Next.js middleware.
+Traditionally, if you want to apply different middlewares for different routes in Next.js, you have to use cumbersome and error-prone path checks.
+For instance, you might want to have an authentication middleware only for paths matching `/dashboard/:path*` and a subdomain-specific middleware on another set of routes.
 As of now, this can be achieved through ugly path checking inside a middleware that matches almost all the routes.
-With `next-wayfinder` I aim to add some ease until Next officially supports multiple middleware for different matchers.
+
+With `next-wayfinder`, you can declare sub-middlewares via `path-regexp` and custom rules in order to achieve a nice, clear middleware file where you can come back after months and instantly understand what's happening.
+This makes it easy to handle complex routing scenarios and keep your code organized.
+In summary, `next-wayfinder` simplifies middleware management in Next.js applications and reduces the amount of code needed to manage your middleware, making it easier to write and maintain clean, organized code.
 
 ## Quick Start
 
 `next-wayfinder` exports an `handlePaths` function that can be used as middleware entry point.
-It accepts an array of [`Middleware`](./src/types.ts) matching the route or the domain.
+It accepts an array of [`Middleware`](./src/types.ts) objects that match route or hostname, and applies the first matching middleware.
 
 ```ts
 // middleware.ts
@@ -46,7 +55,7 @@ import { NextResponse } from "next/server";
 export default handlePaths(
     [
         {
-            matcher: "/dashboard/:lang/:path*",
+            path: "/dashboard/:lang/:path*",
             // We can filter this to apply only if some params matches exactly our needs
             guard: params => params.lang === "en",
             handler: async req => {
@@ -66,8 +75,8 @@ export default handlePaths(
             },
         },
         {
-            domain: /^app\./,
-            // rewrites all routes on domain app.* to the `pages/app/<path>`
+            hostname: /^app\./,
+            // rewrites all routes on hostname app.* to the `pages/app/<path>`
             handler: req =>
                 NextResponse.rewrite(
                     new URL("/app${req.nextUrl.pathname}", req.url)
@@ -75,16 +84,16 @@ export default handlePaths(
         },
         {
             // easy syntax for redirects
-            matcher: "/blog/:slug/edit",
+            path: "/blog/:slug/edit",
             // params will be replaced automatically
             redirectTo: "/dashboard/posts/:slug",
         },
     ],
     {
-        debug: process.env.NODE_ENV !== "production",
         // inject custom data, like session etc
         // it will be available inside `req.injected`
-        injector: async request => ({ isLoggedIn: !!req.session }),
+        injector: async req => ({ isLoggedIn: !!req.session }),
+        debug: process.env.NODE_ENV !== "production",
     }
 );
 ```
@@ -99,15 +108,15 @@ This can be easily achieved by passing an array of middleware as a handler. The 
 
 export default handlePaths([
     {
-        domain: /^app\./,
+        hostname: /^app\./,
         handler: [
             {
-                matcher: "/",
+                path: "/",
                 handler: req =>
                     NextResponse.redirect(new URL("/dashboard", req.url)),
             },
             {
-                matcher: "/:path*",
+                path: "/:path*",
                 handler: () => NextResponse.next(),
             },
         ],
@@ -144,7 +153,7 @@ export default handlePaths(
     [
         {
             // auth guard
-            matcher: "/dashboard/:path*",
+            path: "/dashboard/:path*",
             pre: req =>
                 req.injected?.session ? true : { redirectTo: "/auth/sign-in" },
             handler: req => {
@@ -168,7 +177,7 @@ export default handlePaths(
 
 ## Authors
 
-This library is created by Federico Vitale - ([@rawnly](https://github.com/rawnly))
+This library is created by [Federico Vitale](https://untitled.dev) - ([@rawnly](https://github.com/rawnly))
 
 ## License
 

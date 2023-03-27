@@ -2,49 +2,72 @@ import { NextRequest } from "next/server";
 import { match, pathToRegexp } from "path-to-regexp";
 
 import {
+    HostnameCheck,
     Middleware,
     NextRequestWithParams,
     PathMatcher,
+    RequestParser,
     UrlParams,
 } from "./types";
 
-export const parse = (req: NextRequest) => {
-    const domain = req.headers.get("host") ?? "";
-    const path = req.nextUrl.pathname;
+export const parse: RequestParser = req => {
+    const hostname = req.headers.get("host") ?? "";
+    const pathname = req.nextUrl.pathname;
 
-    return { domain, path };
+    return { hostname, pathname };
 };
 
 export const getParams = (matcher: PathMatcher, pathname: string): UrlParams =>
     (match(matcher)(pathname) as any).params ?? {};
 
 interface FindOptions {
-    domain: string;
+    hostname: string;
     path: string;
 }
+
+/**
+ *
+ * checks if the given hostnamecheck matches the given hostname
+ */
+const checkHostName = (a: HostnameCheck, b: string): boolean => {
+    if (typeof a === "string") {
+        return a === b;
+    }
+
+    if (a instanceof RegExp) {
+        return a.test(b);
+    }
+
+    if (a instanceof Function) {
+        return a(b);
+    }
+
+    return false;
+};
 
 // find the middleware corrisponding to the path or domain
 export function findMiddleware<T>(
     middlewares: Middleware<T>[],
-    { path, domain }: FindOptions
+    { path, hostname }: FindOptions
 ): Middleware<T> | undefined {
     return middlewares.find(m => {
         let matches = false;
 
-        if (m.matcher || Middleware.isRewrite(m) || Middleware.isRedirect(m)) {
-            matches = pathToRegexp(m.matcher).test(path);
-
-            if (m.guard && m.matcher) {
-                return matches && m.guard(getParams(m.matcher, path));
+        if (Middleware.isHostname(m)) {
+            if (Array.isArray(m.hostname)) {
+                return m.hostname.some(check => checkHostName(check, hostname));
             }
 
-            return matches;
+            return checkHostName(m.hostname, hostname);
         }
 
-        // domain is always defined if matcher is not
-        return m.domain instanceof RegExp
-            ? m.domain.test(domain)
-            : m.domain?.(domain);
+        matches = pathToRegexp(m.path).test(path);
+
+        if (m.guard && m.path) {
+            return matches && m.guard(getParams(m.path, path));
+        }
+
+        return matches;
     });
 }
 
@@ -53,12 +76,14 @@ export const getParamsDescriptor = (params: UrlParams): PropertyDescriptor => ({
     enumerable: true,
     writable: false,
     value: params,
+    configurable: true,
 });
 
 export const getInjectorDescriptor = <T>(data: T): PropertyDescriptor => ({
     enumerable: true,
     writable: false,
     value: data,
+    configurable: true,
 });
 
 export const inject = <T>(
@@ -90,9 +115,9 @@ export const replaceValues = (pathname: string, values: UrlParams): string =>
         (acc, [key, val]) =>
             val
                 ? acc.replace(
-                      `:${key}`,
-                      Array.isArray(val) ? val.join("/") : val
-                  )
+                    `:${key}`,
+                    Array.isArray(val) ? val.join("/") : val
+                )
                 : acc,
         pathname
     );
