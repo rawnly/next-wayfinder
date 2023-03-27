@@ -1,29 +1,44 @@
 {
-	"$schema": "https://json.schemastore.org/tsconfig",
-	"include": ["src/**/*", "__tests__/**/*", "config/**/*", "*.env.d.ts"],
-	"display": "Base",
-	"compilerOptions": {
-		"moduleResolution": "Node",
-		"module": "ESNext",
-		"resolveJsonModule": true,
-		"isolatedModules": true,
-		"stripInternal": true,
-		"skipDefaultLibCheck": true,
-		"esModuleInterop": true,
-		"strict": true,
-		"types": ["vitest/globals"],
-		"outDir": "build",
-		"sourceMap": true,
-		"noImplicitAny": true,
-		"noFallthroughCasesInSwitch": true,
-		"noUnusedLocals": true,
-		"pretty": true,
-		"declaration": true,
-		"baseUrl": ".",
-		"paths": {
-			"@/*": ["src/*"],
-			"@": ["src/index.ts"]
-		}
-	},
-	"exclude": ["node_modules", "build", "./coverage"]
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "include": [
+        "src/**/*",
+        "__tests__/**/*",
+        "config/**/*",
+        "*.env.d.ts"
+    ],
+    "display": "Base",
+    "compilerOptions": {
+        "moduleResolution": "Node",
+        "module": "ESNext",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "stripInternal": true,
+        "skipDefaultLibCheck": true,
+        "esModuleInterop": true,
+        "strict": true,
+        "types": [
+            "vitest/globals"
+        ],
+        "outDir": "build",
+        "sourceMap": true,
+        "noImplicitAny": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUnusedLocals": true,
+        "pretty": true,
+        "declaration": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "src/*"
+            ],
+            "@": [
+                "src/index.ts"
+            ]
+        }
+    },
+    "exclude": [
+        "node_modules",
+        "build",
+        "./coverage"
+    ]
 }

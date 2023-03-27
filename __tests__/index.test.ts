@@ -4,35 +4,35 @@ import { test, expect } from "vitest";
 import { type Middleware } from "../src/types";
 import { addParams, findMiddleware, getParams, inject } from "../src/utils";
 
-const queryForDomain = { domain: "app.acme.org", path: "/" };
+const queryForDomain = { hostname: "app.acme.org", path: "/" };
+const queryForPath = { hostname: "", path: "/dashboard/it" };
 
-const queryForPath = { domain: "", path: "/dashboard/it" };
 const middlewares: Middleware<unknown>[] = [
     {
-        matcher: "/dashboard/:lang",
+        path: "/dashboard/:lang",
         guard: params => params.lang === "en",
         handler: _r => NextResponse.next(),
     },
     {
-        matcher: "/dashboard/:lang/:path*",
+        path: "/dashboard/:lang/:path*",
         guard: params => params.lang === "it",
         handler: _r => NextResponse.next(),
     },
     {
-        domain: d => d.startsWith("app"),
+        hostname: d => d.startsWith("app"),
         handler: () => NextResponse.next(),
     },
     {
-        matcher: "/:path*",
+        path: "/:path*",
         handler: () => NextResponse.next(),
     },
     {
-        matcher: "/events/:slug/edit",
+        path: "/events/:slug/edit",
         redirectTo: "/dashboard/events/:slug",
         includeOrigin: "origin",
     },
     {
-        matcher: "/events/:slug/edit",
+        path: "/events/:slug/edit",
         redirectTo: "/dashboard/events/:slug",
         includeOrigin: true,
     },
@@ -45,14 +45,14 @@ test("should use the fallback middleware", () => {
     });
 
     expect(middleware).toBeDefined();
-    expect(middleware?.matcher).toEqual("/:path*");
+    expect(middleware?.path).toEqual("/:path*");
 });
 
 test("should find the middleware with array", () => {
     const middleware = findMiddleware(
         [
             {
-                matcher: ["/login"],
+                path: ["/login"],
                 handler: () => null,
             },
         ],
@@ -66,28 +66,28 @@ test("should find the middleware with string", () => {
     const middleware = findMiddleware(middlewares, queryForPath);
 
     expect(middleware).not.toBeUndefined();
-    expect(middleware).toHaveProperty("matcher");
+    expect(middleware).toHaveProperty("path");
 
-    if (!middleware?.matcher) return;
+    if (!middleware?.path) return;
 
     expect(middleware.guard?.({ lang: "it" })).toBe(true);
 
     const m2 = findMiddleware(middlewares, queryForDomain);
 
     expect(m2).not.toBeUndefined();
-    expect(m2).not.toHaveProperty("matcher");
-    expect(m2).toHaveProperty("domain");
+    expect(m2).not.toHaveProperty("path");
+    expect(m2).toHaveProperty("hostname");
 });
 
 test("should retrive the params", () => {
     const middleware = findMiddleware(middlewares, queryForPath);
 
     expect(middleware).not.toBeUndefined();
-    expect(middleware).toHaveProperty("matcher");
+    expect(middleware).toHaveProperty("path");
 
-    if (!middleware?.matcher) return;
+    if (!middleware?.path) return;
 
-    const params = getParams(middleware.matcher, "/dashboard/it");
+    const params = getParams(middleware.path, "/dashboard/it");
 
     expect(params).toHaveProperty("lang");
     expect(params.lang).toBe("it");
@@ -97,14 +97,14 @@ test("should add the params", () => {
     const middleware = findMiddleware(middlewares, queryForPath);
 
     expect(middleware).not.toBeUndefined();
-    expect(middleware).toHaveProperty("matcher");
+    expect(middleware).toHaveProperty("path");
 
-    if (!middleware?.matcher) return;
+    if (!middleware?.path) return;
 
     const request = new NextRequest(new URL("http://localhost:3000"));
     const requestWithParams = addParams(
         request,
-        middleware.matcher,
+        middleware.path,
         "/dashboard/it"
     );
 
@@ -118,9 +118,9 @@ test("shuld inject", () => {
     const middleware = findMiddleware(middlewares, queryForPath);
 
     expect(middleware).not.toBeUndefined();
-    expect(middleware).toHaveProperty("matcher");
+    expect(middleware).toHaveProperty("path");
 
-    if (!middleware?.matcher) return;
+    if (!middleware?.path) return;
 
     const request = new NextRequest(new URL("http://localhost:3000"));
     const injectedRequest = inject(request, { ok: true });

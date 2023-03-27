@@ -12,8 +12,8 @@ test("should parse next url", () => {
     const data = parse(request);
 
     expect(data).toStrictEqual({
-        path: "/",
-        domain: "google.com",
+        pathname: "/",
+        hostname: "google.com",
     });
 });
 
