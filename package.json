@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "turbo run test",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "dev": "turbo run dev"
   },
   "keywords": [],
   "author": "Federico Vitale <mail@fedevitale.dev>",

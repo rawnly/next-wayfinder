@@ -1,0 +1,13 @@
+{
+  "pipeline": {
+    "start": {},
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next"]
+    },
+    "dev": {
+      "cache": false
+    },
+    "test": {}
+  }
+}
