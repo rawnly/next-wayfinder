@@ -36,6 +36,13 @@ interface WayfinderOptions<T> {
      * A function to extract `hostname` and `pathname` from `NextRequest`
      */
     parser?: RequestParser;
+
+    /**
+     * The response to be used.
+     * Useful when you want to chain other middlewares or return a custom response
+     * Default to `NextResponse.next()`
+     */
+    response?: NextResponse;
 }
 
 export const getHost = (request: NextRequest) => defaultParse(request).hostname;
@@ -73,7 +80,7 @@ export const getHost = (request: NextRequest) => defaultParse(request).hostname;
  */
 export function handlePaths<T>(
     middlewares: Middleware<T>[],
-    options?: WayfinderOptions<T>
+    { response = NextResponse.next(), ...options }: WayfinderOptions<T> = {}
 ): NextMiddleware {
     return async function(req, ev) {
         const { pathname: path, hostname } = (options?.parser ?? defaultParse)(
@@ -92,7 +99,7 @@ export function handlePaths<T>(
 
         // if no middleware is found then continue the response pipe
         if (!middleware) {
-            return NextResponse.next();
+            return response;
         }
 
         // inject data asap
@@ -180,7 +187,7 @@ export function handlePaths<T>(
 
             if (result !== true) {
                 // skip middleware
-                if (!result) return NextResponse.next();
+                if (!result) return response;
 
                 if (typeof result.redirectTo === "string") {
                     const url = requestWithParams.nextUrl.clone();
