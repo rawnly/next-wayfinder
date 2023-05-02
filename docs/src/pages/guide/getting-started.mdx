@@ -1,0 +1,78 @@
+import { Steps, Tabs, Tab } from 'nextra-theme-docs'
+
+<Steps>
+
+### Installation
+<Tabs items={["npm", "pnpm", "yarn"]}>
+  <Tab>
+    ```sh
+    npm install next-wayfinder
+    ```
+  </Tab>
+  <Tab>
+    ```sh
+    pnpm add next-wayfinder
+    ```
+  </Tab>
+  <Tab>
+    ```sh
+    yarn add next-wayfinder
+    ```
+  </Tab>
+</Tabs>
+
+### Initialize
+`next-wayfinder` exports an `handlePaths` function that can be used as middleware entry point.
+It accepts an array of [`Middleware`](./src/types.ts) objects that match route or hostname, and applies the first matching middleware.
+
+```ts filename="middleware.ts" copy showLineNumbers
+import { handlePaths } from "next-wayfinder";
+import { NextResponse } from "next/server";
+
+// the first matching middleware will be applied
+export default handlePaths(
+    [
+        {
+            path: "/dashboard/:lang/:path*",
+            // We can filter this to apply only if some params matches exactly our needs
+            guard: params => params.lang === "en",
+            handler: async req => {
+                // url params are injected by `handlePaths`
+                // in addition to req.query
+                // this is done because you might want to handle paths
+                // that are not available under your `app` or `pages` directory.
+                console.log(req.params);
+
+                // do some checks
+                if (!isAuthenticated(req)) {
+                    return NextResponse.redirect("/");
+                }
+
+                // continue the request
+                return NextResponse.next();
+            },
+        },
+        {
+            hostname: /^app\./,
+            // rewrites all routes on hostname app.* to the `pages/app/<path>`
+            handler: req =>
+                NextResponse.rewrite(
+                    new URL("/app${req.nextUrl.pathname}", req.url)
+                ),
+        },
+        {
+            // easy syntax for redirects
+            path: "/blog/:slug/edit",
+            // params will be replaced automatically
+            redirectTo: "/dashboard/posts/:slug",
+        },
+    ],
+    {
+        // inject custom data, like session etc
+        // it will be available inside `req.injected`
+        injector: async req => ({ isLoggedIn: !!req.session }),
+        debug: process.env.NODE_ENV !== "production",
+    }
+);
+```
+</Steps>

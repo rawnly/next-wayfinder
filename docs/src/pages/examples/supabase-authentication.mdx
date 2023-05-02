@@ -1,0 +1,50 @@
+# Supabase Authentication
+Below an example on how to integrate supabase authentication.
+
+```ts filename="middleware.ts" copy showLineNumbers
+import { NextResponse, NextRequest } from "next/server";
+import { handlePaths, NextREquestWithParams } from "next-wayfinder";
+import { createMiddlewareSupabaseClient } from "@supabase/auth-helpers-nextjs";
+
+const getSession = async (req: NextRequestWithParams) => {
+    const res = NextResponse.next();
+    const supabase = createMiddlewareSupabaseClient({ req, res });
+
+    const {
+        data: { session },
+        error,
+    } = await supabase.auth.getSession();
+
+    if (error) {
+        console.error(`Auth Error: `, error);
+        return null;
+    }
+
+    return session;
+};
+
+export default handlePaths(
+    [
+        {
+            // auth guard
+            path: "/dashboard/:path*",
+            pre: req =>
+                req.injected?.session ? true : { redirectTo: "/auth/sign-in" },
+            handler: req => {
+                console.log("User authenticated: ", req.injected?.session);
+
+                // do your stuff here
+
+                return NextResponse.next();
+            },
+        },
+    ],
+    {
+        injector: async req => {
+            const session = await getSession(req);
+
+            return { session };
+        },
+    }
+);
+```

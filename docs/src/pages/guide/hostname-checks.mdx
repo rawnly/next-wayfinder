@@ -1,0 +1,30 @@
+import { Callout } from 'nextra-theme-docs'
+
+# Hostname Checks
+
+In some cases, you might want to check paths on a domain (i.e., using the same project for handling both the public website and the dashboard).
+This can be easily achieved by passing an array of middleware as a handler. 
+
+<Callout>
+The `handlePaths` function iterates recursively over all the items provided (including nested ones), so a very high level of complexity can be "handled". 
+However, to improve performance, I would recommend keeping it as simple as possible.
+</Callout>
+
+```ts filename="middleware.ts" copy showLineNumbers
+export default handlePaths([
+    {
+        hostname: /^app\./,
+        handler: [
+            {
+                path: "/",
+                handler: req =>
+                    NextResponse.redirect(new URL("/dashboard", req.url)),
+            },
+            {
+                path: "/:path*",
+                handler: () => NextResponse.next(),
+            },
+        ],
+    },
+]);
+```

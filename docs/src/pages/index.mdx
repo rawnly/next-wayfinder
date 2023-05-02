@@ -1,0 +1,24 @@
+ # Introduction
+
+`next-wayfinder` is a lightweight (_~3kb minzipped_) and flexible package that simplifies the organization of middleware in Next.js applications.
+With `next-wayfinder`, you can easily apply different middlewares based on the route or hostname, without having to use cumbersome and error-prone path checks.
+
+Traditionally, managing middleware in Next.js can be challenging, especially when dealing with complex routing scenarios.
+For example, you may want to apply an authentication middleware only for certain paths or a subdomain-specific middleware for certain hostnames.
+With `next-wayfinder`, you can easily manage and maintain your middleware and keep your code clean and organized.
+`next-wayfinder` exports an `handlePaths` function that can be used as middleware entry point.
+It accepts an array of `Middleware` objects that match the route or hostname, and applies the first matching middleware.
+This allows you to easily handle complex routing scenarios and reduce the amount of code needed to manage your middleware.
+
+## Why 
+
+`next-wayfinder` was created based on [this discussion][discussion-link] that highlighted the difficulty of handling complex routing inside the Next.js middleware.
+Traditionally, if you want to apply different middlewares for different routes in Next.js, you have to use cumbersome and error-prone path checks.
+For instance, you might want to have an authentication middleware only for paths matching `/dashboard/:path*` and a subdomain-specific middleware on another set of routes.
+As of now, this can be achieved through ugly path checking inside a middleware that matches almost all the routes.
+
+With `next-wayfinder`, you can declare sub-middlewares via `path-regexp` and custom rules in order to achieve a nice, clear middleware file where you can come back after months and instantly understand what's happening.
+This makes it easy to handle complex routing scenarios and keep your code organized.
+In summary, `next-wayfinder` simplifies middleware management in Next.js applications and reduces the amount of code needed to manage your middleware, making it easier to write and maintain clean, organized code.
+
+[discussion-link]: https://github.com/vercel/next.js/discussions/43816#discussioncomment-4348363
