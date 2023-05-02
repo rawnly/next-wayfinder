@@ -56,6 +56,33 @@ importers:
         specifier: 5.0.4
         version: 5.0.4
 
+  examples/basic:
+    dependencies:
+      '@types/node':
+        specifier: 18.11.11
+        version: 18.11.11
+      '@types/react':
+        specifier: 18.0.26
+        version: 18.0.26
+      '@types/react-dom':
+        specifier: 18.0.9
+        version: 18.0.9
+      next:
+        specifier: 13.0.6
+        version: 13.0.6(react-dom@18.2.0)(react@18.2.0)
+      next-wayfinder:
+        specifier: link:../..
+        version: link:../..
+      react:
+        specifier: 18.2.0
+        version: 18.2.0
+      react-dom:
+        specifier: 18.2.0
+        version: 18.2.0(react@18.2.0)
+      typescript:
+        specifier: 4.9.4
+        version: 4.9.4
+
   packages/next-wayfinder:
     dependencies:
       path-to-regexp:
@@ -116,33 +143,6 @@ importers:
       vitest-fetch-mock:
         specifier: ^0.2.1
         version: 0.2.1(vitest@0.24.5)
-
-  packages/next-wayfinder/examples/basic:
-    dependencies:
-      '@types/node':
-        specifier: 18.11.11
-        version: 18.11.11
-      '@types/react':
-        specifier: 18.0.26
-        version: 18.0.26
-      '@types/react-dom':
-        specifier: 18.0.9
-        version: 18.0.9
-      next:
-        specifier: 13.0.6
-        version: 13.0.6(react-dom@18.2.0)(react@18.2.0)
-      next-wayfinder:
-        specifier: link:../..
-        version: link:../..
-      react:
-        specifier: 18.2.0
-        version: 18.2.0
-      react-dom:
-        specifier: 18.2.0
-        version: 18.2.0(react@18.2.0)
-      typescript:
-        specifier: 4.9.4
-        version: 4.9.4
 
 packages:
 
