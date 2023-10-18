@@ -40,7 +40,7 @@ export default handlePaths(
         },
     ],
     {
-        injector: async req => {
+        context: async req => {
             const session = await getSession(req);
 
             return { session };

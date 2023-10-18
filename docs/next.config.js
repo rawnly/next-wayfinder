@@ -6,9 +6,6 @@ const withNextra = require("nextra")({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    appDir: true,
-  },
 };
 
 module.exports = withNextra(nextConfig);

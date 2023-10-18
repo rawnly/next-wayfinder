@@ -1,0 +1,124 @@
+# Middlewares
+There are 4 types of middlewares that ca be defined to handle your requests:
+
+- [`PathMiddleware`](#path-middleware)
+- [`RedirectMiddleware`](#redirect-middleware)
+- [`RewriteMiddleware`](#rewrite-middleware)
+- [`HostnameMiddleware`](/guide/hostname-checks)
+
+## Common Properties 
+These properties are available in all the middlewares types
+
+```ts 
+interface BaseMiddleware {
+    guard?: (params: UrlParams) => boolean;
+    pre?: (request: NextRequestWithParams<T>) => MaybePromise<
+        | boolean
+        | {
+              redirectTo: string | URL;
+              statusCode?: number;
+          }
+    >;
+}
+```
+
+| prop | desc |
+| ---- | ---- |
+| `guard` | A function that checks if the given path arguments are valid. If `false` is returned then the middleware is skipped. |
+| `pre` | This is executed before the middleware. It can be useful to check authentication and separate the logic.
+
+
+## Path Middleware
+This is the standard middleware that is executed when the path is matched. 
+
+```ts 
+interface PathMiddleware<T> {
+    handler: NextMiddlewareWithParams<T> | Middleware<T>[];
+    path: PathMatcher;
+    guard?: (params: UrlParams) => boolean;
+    pre?: (request: NextRequestWithParams<T>) => MaybePromise<
+        | boolean
+        | {
+              redirectTo: string | URL;
+              statusCode?: number;
+          }
+    >;
+}
+```
+
+#### Example 
+
+```ts filename="middleware.ts" copy showLineNumbers
+const supportedLanguages = ["it", "en"]
+const slugs = [...]
+
+export default handlePaths([
+  {
+    path: "/:lang/blog/:slug",
+    guard: params => supportedLanguages.includes(params.lang) || slugs.includes(params.slug),
+    handler: (req, res, ev) => {
+      // do something
+
+      return res
+    } 
+  }
+])
+```
+
+
+## Redirect Middleware
+The name is quite self-explanatory. This middleware is executed when the path is matched and it redirects to another path.
+If you need a more advanced redirect logic you can use the [`PathMiddleware`](#path-middleware) 
+
+```ts 
+interface RedirectMiddleware<T> {
+    path: PathMatcher;
+    guard?: (params: UrlParams) => boolean;
+    redirectTo: string | ((req: NextRequestWithParams<T>) => string);
+    includeOrigin?: string | boolean;
+}
+```
+
+#### Example Usage
+
+```ts filename="middleware.ts" copy showLineNumbers
+const supportedLanguages = ["it", "en"]
+const slugs = [...]
+
+export default handlePaths([
+  {
+    path: "/app",
+    redirectTo: "/dashboard",
+  }
+])
+```
+
+
+## Rewrite Middleware
+This middleware is executed when the path is matched and it rewrites the path to another one. 
+
+
+```ts 
+interface RewriteMiddleware<T> {
+    path: PathMatcher;
+    guard?: (params: UrlParams) => boolean;
+    rewriteTo: string | ((req: NextRequestWithParams<T>) => string);
+}
+```
+
+#### Example Usage
+
+```ts filename="middleware.ts" copy showLineNumbers
+const supportedLanguages = ["it", "en"]
+const slugs = [...]
+
+export default handlePaths([
+  {
+    path: "/",
+    rewriteTo: "/marketing",
+  }, {
+    path: "/dashboard",
+    rewriteTo: "/app",
+  }
+])
+```

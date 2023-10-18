@@ -1,0 +1,31 @@
+# Context
+
+The `context` property can be an object or a function that can used to pass properties into our request. 
+For example you can provide a session object or token with the user data.
+
+#### Example 
+```ts copy showLineNumbers filename="middleware.ts" 
+import { type Session, getSession } from '@acme/auth'
+
+interface Context {
+    session: Session
+}
+
+export default handlePaths([
+    {
+        path: "/protected",
+        pre: req => !!req.ctx?.session || {
+            redirectTo: '/auth/sign-in'
+        },
+        handler: (_, res) => res 
+    }
+], {
+    context: async request => {
+        const session = await getSession(request);
+
+        return {
+            session
+        }
+    }
+})
+```

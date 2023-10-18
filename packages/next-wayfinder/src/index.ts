@@ -2,10 +2,12 @@ import { NextMiddleware, NextRequest, NextResponse } from "next/server";
 import { match } from "ts-pattern";
 
 import {
+    BeforeAllMiddleware,
     Middleware,
     NextRequestWithParams,
     RequestInjector,
     RequestParser,
+    ResponseFactory,
 } from "./types";
 import {
     parse as defaultParse,
@@ -13,7 +15,7 @@ import {
     addParams,
     getParamsDescriptor,
     replaceValues,
-    inject,
+    applyContext,
 } from "./utils";
 
 export type {
@@ -29,7 +31,13 @@ interface WayfinderOptions<T> {
      *
      * A function that returns the data to be injected into the request
      */
-    injector?: RequestInjector<T>;
+    context?: RequestInjector<T> | T;
+
+    /**
+     * Global middleware to be executed before all other middlewares
+     * Useful if you want to set a cookie or apply some logic before each request
+     */
+    beforeAll?: BeforeAllMiddleware;
 
     /**
      *
@@ -42,7 +50,7 @@ interface WayfinderOptions<T> {
      * Useful when you want to chain other middlewares or return a custom response
      * Default to `NextResponse.next()`
      */
-    response?: NextResponse;
+    response?: ResponseFactory;
 }
 
 export const getHost = (request: NextRequest) => defaultParse(request).hostname;
@@ -80,9 +88,31 @@ export const getHost = (request: NextRequest) => defaultParse(request).hostname;
  */
 export function handlePaths<T>(
     middlewares: Middleware<T>[],
-    { response = NextResponse.next(), ...options }: WayfinderOptions<T> = {}
+    { response: res, ...options }: WayfinderOptions<T> = {}
 ): NextMiddleware {
-    return async function(req, ev) {
+    return async function (req, ev) {
+        if (options.debug && options.beforeAll) {
+            console.debug(`[BeforeAll] >> Executing...`);
+        }
+
+        let defaultResponse: NextResponse;
+        if (res instanceof Function) {
+            defaultResponse = res(req, ev);
+        } else if (!res) {
+            defaultResponse = NextResponse.next();
+        } else {
+            defaultResponse = res;
+        }
+
+        const response =
+            (await options.beforeAll?.(req, defaultResponse)) ||
+            defaultResponse;
+
+        if (response.redirected) {
+            if (options.debug) console.debug(`[BeforeAll] >> Redirected!`);
+            return response;
+        }
+
         const { pathname: path, hostname } = (options?.parser ?? defaultParse)(
             req
         );
@@ -102,23 +132,29 @@ export function handlePaths<T>(
             return response;
         }
 
-        // inject data asap
-        if (options?.injector) {
-            const data = await options.injector(
-                req as unknown as NextRequestWithParams<T>
-            );
+        // inject context asap
+        if (options?.context) {
+            let data: T;
+
+            if (options.context instanceof Function) {
+                data = await options.context(
+                    req as unknown as NextRequestWithParams<T>
+                );
+            } else {
+                data = options.context;
+            }
 
             if (options.debug) {
-                console.debug(`[Injector] >> Injecting: `, data);
+                console.debug(`[Context] >> Injecting: `, data);
             }
 
             // inject data as req.params
-            inject(req, data);
+            applyContext(req, data);
 
             if (options.debug) {
                 console.debug(
-                    `[Injector] >> Injected: `,
-                    (req as NextRequestWithParams<T>).injected
+                    `[Context] >> Injected: `,
+                    (req as NextRequestWithParams<T>).ctx
                 );
             }
         }
@@ -135,17 +171,17 @@ export function handlePaths<T>(
                     middleware.redirectTo instanceof Function
                         ? middleware.redirectTo(requestWithParams)
                         : replaceValues(
-                            middleware.redirectTo,
-                            requestWithParams.params
-                        )
+                              middleware.redirectTo,
+                              requestWithParams.params
+                          )
                 )
                 .when(Middleware.isRewrite, middleware =>
                     middleware.rewriteTo instanceof Function
                         ? middleware.rewriteTo(requestWithParams)
                         : replaceValues(
-                            middleware.rewriteTo,
-                            requestWithParams.params
-                        )
+                              middleware.rewriteTo,
+                              requestWithParams.params
+                          )
                 )
                 .otherwise(() => "");
 
@@ -174,7 +210,11 @@ export function handlePaths<T>(
             // on hostname middleware we can't add any param
             Object.defineProperty(req, "params", getParamsDescriptor({}));
 
-            return middleware.handler(req as NextRequestWithParams<T>, ev);
+            return middleware.handler(
+                req as NextRequestWithParams<T>,
+                response,
+                ev
+            );
         }
 
         // if is a path-middleware
@@ -207,6 +247,6 @@ export function handlePaths<T>(
             }
         }
 
-        return middleware.handler(requestWithParams, ev);
+        return middleware.handler(requestWithParams, response, ev);
     };
 }

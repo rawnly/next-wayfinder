@@ -1,0 +1,43 @@
+import { Callout } from 'nextra-theme-docs'
+
+# Advanced Options
+Next Wayfinder provides some advanced options to help you customize the behavior of your middlewares.
+
+```ts
+interface WayfinderOptions<T> {
+    /**
+     *
+     * Enables debug logs
+     */
+    debug?: boolean;
+
+    /**
+     *
+     * A function that returns the data to be injected into the request
+     */
+    context?: T | RequestInjector<T>;
+
+    /**
+     * Global middleware to be executed before all other middlewares
+     * Useful if you want to set a cookie or apply some logic before each request
+     */
+    beforeAll?: BeforeAllMiddleware;
+
+    /**
+     *
+     * A function to extract `hostname` and `pathname` from `NextRequest`
+     */
+    parser?: RequestParser;
+
+    /**
+     * The response to be used.
+     * Useful when you want to chain other middlewares or return a custom response
+     * Default to `NextResponse.next()`
+     */
+    response?: NextResponse;
+}
+```
+
+
+
+

@@ -86,11 +86,11 @@ export const getInjectorDescriptor = <T>(data: T): PropertyDescriptor => ({
     configurable: true,
 });
 
-export const inject = <T>(
+export const applyContext = <T>(
     request: NextRequest,
-    data?: T
+    context?: T
 ): NextRequestWithParams<T> => {
-    Object.defineProperty(request, "injected", getInjectorDescriptor(data));
+    Object.defineProperty(request, "ctx", getInjectorDescriptor(context));
 
     return request as unknown as NextRequestWithParams<T>;
 };
@@ -115,9 +115,9 @@ export const replaceValues = (pathname: string, values: UrlParams): string =>
         (acc, [key, val]) =>
             val
                 ? acc.replace(
-                    `:${key}`,
-                    Array.isArray(val) ? val.join("/") : val
-                )
+                      `:${key}`,
+                      Array.isArray(val) ? val.join("/") : val
+                  )
                 : acc,
         pathname
     );
