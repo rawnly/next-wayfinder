@@ -1,14 +1,26 @@
-import { NextMiddleware, NextFetchEvent, NextRequest } from "next/server";
+import {
+    NextMiddleware,
+    NextFetchEvent,
+    NextRequest,
+    NextResponse,
+} from "next/server";
 import { Path } from "path-to-regexp";
 
+type MaybePromise<T> = T | Promise<T>;
 export type UrlParams = Record<string, string | string[] | undefined>;
 export interface NextRequestWithParams<T> extends NextRequest {
     params: UrlParams;
-    injected?: T;
+    ctx?: T;
 }
+
+export type BeforeAllMiddleware = (
+    req: NextRequest,
+    res: NextResponse
+) => MaybePromise<NextResponse>;
 
 export type NextMiddlewareWithParams<T> = (
     request: NextRequestWithParams<T>,
+    response: NextResponse,
     event: NextFetchEvent
 ) => ReturnType<NextMiddleware>;
 
@@ -29,8 +41,6 @@ export interface RequestInjector<T> {
     (request: NextRequestWithParams<T>): Promise<T> | T;
 }
 
-type MaybePromise<T> = T | Promise<T>;
-
 export type Middleware<T> =
     | PathMiddleware<T>
     | HostnameMiddleware<T>
@@ -42,13 +52,14 @@ export type HostnameCheck = string | RegExp | ((hostname: string) => boolean);
 export interface HostnameMiddleware<T> {
     handler: NextMiddlewareWithParams<T> | Middleware<T>[];
     hostname: HostnameCheck | HostnameCheck[];
+    beforeAll?: BeforeAllMiddleware;
     guard?: (params: UrlParams) => boolean;
     pre?: (request: NextRequestWithParams<T>) => MaybePromise<
         | boolean
         | {
-            redirectTo: string | URL;
-            statusCode?: number;
-        }
+              redirectTo: string | URL;
+              statusCode?: number;
+          }
     >;
 }
 
@@ -59,9 +70,9 @@ export interface PathMiddleware<T> {
     pre?: (request: NextRequestWithParams<T>) => MaybePromise<
         | boolean
         | {
-            redirectTo: string | URL;
-            statusCode?: number;
-        }
+              redirectTo: string | URL;
+              statusCode?: number;
+          }
     >;
 }
 

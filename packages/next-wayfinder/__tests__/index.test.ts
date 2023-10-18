@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { test, expect } from "vitest";
 
-import { type Middleware } from "../src/types";
-import { addParams, findMiddleware, getParams, inject } from "../src/utils";
+import { Middleware } from "../src/types";
+import {
+    addParams,
+    findMiddleware,
+    getParams,
+    applyContext,
+} from "../src/utils";
 
 const queryForDomain = { hostname: "app.acme.org", path: "/" };
 const queryForPath = { hostname: "", path: "/dashboard/it" };
@@ -45,7 +50,10 @@ test("should use the fallback middleware", () => {
     });
 
     expect(middleware).toBeDefined();
-    expect(middleware?.path).toEqual("/:path*");
+
+    if (middleware && Middleware.isPath(middleware)) {
+        expect(middleware?.path).toEqual("/:path*");
+    }
 });
 
 test("should find the middleware with array", () => {
@@ -123,9 +131,9 @@ test("shuld inject", () => {
     if (!middleware?.path) return;
 
     const request = new NextRequest(new URL("http://localhost:3000"));
-    const injectedRequest = inject(request, { ok: true });
+    const injectedRequest = applyContext(request, { ok: true });
 
-    expect(request).toHaveProperty("injected");
-    expect(injectedRequest).toHaveProperty("injected");
-    expect(injectedRequest.injected).toHaveProperty("ok", true);
+    expect(request).toHaveProperty("ctx");
+    expect(injectedRequest).toHaveProperty("ctx");
+    expect(injectedRequest.ctx).toHaveProperty("ok", true);
 });

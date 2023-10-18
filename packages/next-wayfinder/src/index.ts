@@ -2,6 +2,7 @@ import { NextMiddleware, NextRequest, NextResponse } from "next/server";
 import { match } from "ts-pattern";
 
 import {
+    BeforeAllMiddleware,
     Middleware,
     NextRequestWithParams,
     RequestInjector,
@@ -13,7 +14,7 @@ import {
     addParams,
     getParamsDescriptor,
     replaceValues,
-    inject,
+    applyContext,
 } from "./utils";
 
 export type {
@@ -29,7 +30,13 @@ interface WayfinderOptions<T> {
      *
      * A function that returns the data to be injected into the request
      */
-    injector?: RequestInjector<T>;
+    context?: RequestInjector<T>;
+
+    /**
+     * Global middleware to be executed before all other middlewares
+     * Useful if you want to set a cookie or apply some logic before each request
+     */
+    beforeAll?: BeforeAllMiddleware;
 
     /**
      *
@@ -80,9 +87,23 @@ export const getHost = (request: NextRequest) => defaultParse(request).hostname;
  */
 export function handlePaths<T>(
     middlewares: Middleware<T>[],
-    { response = NextResponse.next(), ...options }: WayfinderOptions<T> = {}
+    {
+        response: res = NextResponse.next(),
+        ...options
+    }: WayfinderOptions<T> = {}
 ): NextMiddleware {
-    return async function(req, ev) {
+    return async function (req, ev) {
+        if (options.debug && options.beforeAll) {
+            console.debug(`[BeforeAll] >> Executing...`);
+        }
+
+        const response = (await options.beforeAll?.(req, res)) || res;
+
+        if (response.redirected) {
+            if (options.debug) console.debug(`[BeforeAll] >> Redirected!`);
+            return response;
+        }
+
         const { pathname: path, hostname } = (options?.parser ?? defaultParse)(
             req
         );
@@ -103,8 +124,8 @@ export function handlePaths<T>(
         }
 
         // inject data asap
-        if (options?.injector) {
-            const data = await options.injector(
+        if (options?.context) {
+            const data = await options.context(
                 req as unknown as NextRequestWithParams<T>
             );
 
@@ -113,12 +134,12 @@ export function handlePaths<T>(
             }
 
             // inject data as req.params
-            inject(req, data);
+            applyContext(req, data);
 
             if (options.debug) {
                 console.debug(
                     `[Injector] >> Injected: `,
-                    (req as NextRequestWithParams<T>).injected
+                    (req as NextRequestWithParams<T>).ctx
                 );
             }
         }
@@ -135,17 +156,17 @@ export function handlePaths<T>(
                     middleware.redirectTo instanceof Function
                         ? middleware.redirectTo(requestWithParams)
                         : replaceValues(
-                            middleware.redirectTo,
-                            requestWithParams.params
-                        )
+                              middleware.redirectTo,
+                              requestWithParams.params
+                          )
                 )
                 .when(Middleware.isRewrite, middleware =>
                     middleware.rewriteTo instanceof Function
                         ? middleware.rewriteTo(requestWithParams)
                         : replaceValues(
-                            middleware.rewriteTo,
-                            requestWithParams.params
-                        )
+                              middleware.rewriteTo,
+                              requestWithParams.params
+                          )
                 )
                 .otherwise(() => "");
 
@@ -174,7 +195,11 @@ export function handlePaths<T>(
             // on hostname middleware we can't add any param
             Object.defineProperty(req, "params", getParamsDescriptor({}));
 
-            return middleware.handler(req as NextRequestWithParams<T>, ev);
+            return middleware.handler(
+                req as NextRequestWithParams<T>,
+                response,
+                ev
+            );
         }
 
         // if is a path-middleware
@@ -207,6 +232,6 @@ export function handlePaths<T>(
             }
         }
 
-        return middleware.handler(requestWithParams, ev);
+        return middleware.handler(requestWithParams, response, ev);
     };
 }
