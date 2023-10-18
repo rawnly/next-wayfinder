@@ -7,6 +7,7 @@ import {
     NextRequestWithParams,
     RequestInjector,
     RequestParser,
+    ResponseFactory,
 } from "./types";
 import {
     parse as defaultParse,
@@ -30,7 +31,7 @@ interface WayfinderOptions<T> {
      *
      * A function that returns the data to be injected into the request
      */
-    context?: RequestInjector<T>;
+    context?: RequestInjector<T> | T;
 
     /**
      * Global middleware to be executed before all other middlewares
@@ -49,7 +50,7 @@ interface WayfinderOptions<T> {
      * Useful when you want to chain other middlewares or return a custom response
      * Default to `NextResponse.next()`
      */
-    response?: NextResponse;
+    response?: ResponseFactory;
 }
 
 export const getHost = (request: NextRequest) => defaultParse(request).hostname;
@@ -87,17 +88,25 @@ export const getHost = (request: NextRequest) => defaultParse(request).hostname;
  */
 export function handlePaths<T>(
     middlewares: Middleware<T>[],
-    {
-        response: res = NextResponse.next(),
-        ...options
-    }: WayfinderOptions<T> = {}
+    { response: res, ...options }: WayfinderOptions<T> = {}
 ): NextMiddleware {
     return async function (req, ev) {
         if (options.debug && options.beforeAll) {
             console.debug(`[BeforeAll] >> Executing...`);
         }
 
-        const response = (await options.beforeAll?.(req, res)) || res;
+        let defaultResponse: NextResponse;
+        if (res instanceof Function) {
+            defaultResponse = res(req, ev);
+        } else if (!res) {
+            defaultResponse = NextResponse.next();
+        } else {
+            defaultResponse = res;
+        }
+
+        const response =
+            (await options.beforeAll?.(req, defaultResponse)) ||
+            defaultResponse;
 
         if (response.redirected) {
             if (options.debug) console.debug(`[BeforeAll] >> Redirected!`);
@@ -123,14 +132,20 @@ export function handlePaths<T>(
             return response;
         }
 
-        // inject data asap
+        // inject context asap
         if (options?.context) {
-            const data = await options.context(
-                req as unknown as NextRequestWithParams<T>
-            );
+            let data: T;
+
+            if (options.context instanceof Function) {
+                data = await options.context(
+                    req as unknown as NextRequestWithParams<T>
+                );
+            } else {
+                data = options.context;
+            }
 
             if (options.debug) {
-                console.debug(`[Injector] >> Injecting: `, data);
+                console.debug(`[Context] >> Injecting: `, data);
             }
 
             // inject data as req.params
@@ -138,7 +153,7 @@ export function handlePaths<T>(
 
             if (options.debug) {
                 console.debug(
-                    `[Injector] >> Injected: `,
+                    `[Context] >> Injected: `,
                     (req as NextRequestWithParams<T>).ctx
                 );
             }

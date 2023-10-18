@@ -26,6 +26,10 @@ export type NextMiddlewareWithParams<T> = (
 
 export type PathMatcher = Path;
 
+export type ResponseFactory =
+    | NextResponse
+    | ((request: NextRequest, ev: NextFetchEvent) => NextResponse);
+
 /**
  *
  * A function to extract `hostname` and `pathname` from `NextRequest`
@@ -38,7 +42,7 @@ export interface RequestParser {
 }
 
 export interface RequestInjector<T> {
-    (request: NextRequestWithParams<T>): Promise<T> | T;
+    (request: NextRequestWithParams<T>): MaybePromise<T>;
 }
 
 export type Middleware<T> =
