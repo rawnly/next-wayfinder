@@ -53,48 +53,46 @@ import { NextResponse } from "next/server";
 
 // the first matching middleware will be applied
 export default handlePaths(
-    [
-        {
-            path: "/dashboard/:lang/:path*",
-            // We can filter this to apply only if some params matches exactly our needs
-            guard: params => params.lang === "en",
-            handler: async req => {
-                // url params are injected by `handlePaths`
-                // in addition to req.query
-                // this is done because you might want to handle paths
-                // that are not available under your `app` or `pages` directory.
-                console.log(req.params);
-
-                // do some checks
-                if (!isAuthenticated(req)) {
-                    return NextResponse.redirect("/");
-                }
-
-                // continue the request
-                return NextResponse.next();
-            },
-        },
-        {
-            hostname: /^app\./,
-            // rewrites all routes on hostname app.* to the `pages/app/<path>`
-            handler: req =>
-                NextResponse.rewrite(
-                    new URL("/app${req.nextUrl.pathname}", req.url)
-                ),
-        },
-        {
-            // easy syntax for redirects
-            path: "/blog/:slug/edit",
-            // params will be replaced automatically
-            redirectTo: "/dashboard/posts/:slug",
-        },
-    ],
+  [
     {
-        // inject custom data, like session etc
-        // it will be available inside `req.injected`
-        injector: async req => ({ isLoggedIn: !!req.session }),
-        debug: process.env.NODE_ENV !== "production",
-    }
+      path: "/dashboard/:lang/:path*",
+      // We can filter this to apply only if some params matches exactly our needs
+      guard: (params) => params.lang === "en",
+      handler: async (req) => {
+        // url params are injected by `handlePaths`
+        // in addition to req.query
+        // this is done because you might want to handle paths
+        // that are not available under your `app` or `pages` directory.
+        console.log(req.params);
+
+        // do some checks
+        if (!isAuthenticated(req)) {
+          return NextResponse.redirect("/");
+        }
+
+        // continue the request
+        return NextResponse.next();
+      },
+    },
+    {
+      hostname: /^app\./,
+      // rewrites all routes on hostname app.* to the `pages/app/<path>`
+      handler: (req) =>
+        NextResponse.rewrite(new URL("/app${req.nextUrl.pathname}", req.url)),
+    },
+    {
+      // easy syntax for redirects
+      path: "/blog/:slug/edit",
+      // params will be replaced automatically
+      redirectTo: "/dashboard/posts/:slug",
+    },
+  ],
+  {
+    // inject custom data, like session etc
+    // it will be available inside `req.injected`
+    injector: async (req) => ({ isLoggedIn: !!req.session }),
+    debug: process.env.NODE_ENV !== "production",
+  }
 );
 ```
 
@@ -107,20 +105,19 @@ This can be easily achieved by passing an array of middleware as a handler. The 
 // middleware.ts
 
 export default handlePaths([
-    {
-        hostname: /^app\./,
-        handler: [
-            {
-                path: "/",
-                handler: req =>
-                    NextResponse.redirect(new URL("/dashboard", req.url)),
-            },
-            {
-                path: "/:path*",
-                handler: () => NextResponse.next(),
-            },
-        ],
-    },
+  {
+    hostname: /^app\./,
+    handler: [
+      {
+        path: "/",
+        handler: (req) => NextResponse.redirect(new URL("/dashboard", req.url)),
+      },
+      {
+        path: "/:path*",
+        handler: () => NextResponse.next(),
+      },
+    ],
+  },
 ]);
 ```
 
@@ -133,46 +130,83 @@ import { handlePaths, NextREquestWithParams } from "next-wayfinder";
 import { createMiddlewareSupabaseClient } from "@supabase/auth-helpers-nextjs";
 
 const getSession = async (req: NextRequestWithParams) => {
-    const res = NextResponse.next();
-    const supabase = createMiddlewareSupabaseClient({ req, res });
+  const res = NextResponse.next();
+  const supabase = createMiddlewareSupabaseClient({ req, res });
 
-    const {
-        data: { session },
-        error,
-    } = await supabase.auth.getSession();
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
 
-    if (error) {
-        console.error(`Auth Error: `, error);
-        return null;
-    }
+  if (error) {
+    console.error(`Auth Error: `, error);
+    return null;
+  }
 
-    return session;
+  return session;
 };
 
 export default handlePaths(
-    [
-        {
-            // auth guard
-            path: "/dashboard/:path*",
-            pre: req =>
-                req.injected?.session ? true : { redirectTo: "/auth/sign-in" },
-            handler: req => {
-                console.log("User authenticated: ", req.injected?.session);
-
-                // do your stuff here
-
-                return NextResponse.next();
-            },
-        },
-    ],
+  [
     {
-        injector: async req => {
-            const session = await getSession(req);
+      // auth guard
+      path: "/dashboard/:path*",
+      pre: (req) =>
+        req.injected?.session ? true : { redirectTo: "/auth/sign-in" },
+      handler: (req) => {
+        console.log("User authenticated: ", req.injected?.session);
 
-            return { session };
-        },
-    }
+        // do your stuff here
+
+        return NextResponse.next();
+      },
+    },
+  ],
+  {
+    // this injects `session` property into the request object
+    injector: async (req) => {
+      const session = await getSession(req);
+
+      return { session };
+    },
+  }
 );
+```
+
+### Options
+
+You can pass several options to configure your middleware
+
+```ts
+interface WayfinderOptions<T> {
+  debug?: boolean;
+
+  /**
+   *
+   * A function that returns the data to be injected into the request
+   */
+  injector?: RequestInjector<T>;
+
+  /**
+   * Global middleware to be executed before all other middlewares
+   * Useful if you want to set a cookie or apply some logic before each request
+   * It receives the `options.response` (or `NextResponse.next()` if not provided) and `NextRequest` as params
+   */
+  beforeAll?: BeforeAllMiddleware;
+
+  /**
+   *
+   * A function to extract `hostname` and `pathname` from `NextRequest`
+   */
+  parser?: RequestParser;
+
+  /**
+   * The response to be used.
+   * Useful when you want to chain other middlewares or return a custom response
+   * Default to `NextResponse.next()`
+   */
+  response?: NextResponse;
+}
 ```
 
 ## Authors

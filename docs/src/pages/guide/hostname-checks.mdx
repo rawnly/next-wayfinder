@@ -20,9 +20,10 @@ export default handlePaths([
                 handler: req =>
                     NextResponse.redirect(new URL("/dashboard", req.url)),
             },
+            /*  This is the default behaviour */
             {
                 path: "/:path*",
-                handler: () => NextResponse.next(),
+                handler: (req, res) => res,
             },
         ],
     },

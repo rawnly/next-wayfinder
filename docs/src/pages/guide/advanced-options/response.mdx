@@ -1,0 +1,50 @@
+# response
+This is were the first instance of `NextResponse` is intiated. 
+Default value is `NextResponse.next()` but you can customize it and even provide a function to generate it.
+
+## Callbacks Order
+1. The response journey starts here. 
+2. It's passed through the `beforeAll` callback
+3. If available goes through the `beforeAll` callback of the hostname middleware
+4. The actual handler if exists or the default one 
+
+```ts
+// step 1
+function responseFactory() : NextResponse {
+  const res = NextResponse.next()
+
+  // whatever
+  res.cookies.set('appVersion', '0.0.1')
+
+
+  return res
+}
+
+export default handlePaths([
+  {
+    hostname: /app\./,
+    // step 3
+    beforeAll: (req, res) => {
+      // do checks or whatever
+      return res
+    },
+    handler: [
+      {
+        path: '/:path*',
+        // step 4
+        handler: (req, res) => {
+          // do stuff
+          return res
+        }
+      }
+    ]
+  }
+], {
+  response: responseFactory,
+  // step 2
+  beforeAll: (req, res) => {
+    res.cookies.set('my-cookie', 123.toString())
+    return res
+  }
+})
+```
