@@ -10,9 +10,6 @@ const config: DocsThemeConfig = {
   toc: {
     backToTop: true,
   },
-  navbar: {
-    extraContent: <p>hello</p>,
-  },
   project: {
     link: "https://github.com/rawnly/next-wayfinder",
   },
