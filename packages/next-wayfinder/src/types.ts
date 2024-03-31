@@ -45,11 +45,14 @@ export interface RequestInjector<T> {
     (request: NextRequestWithParams<T>): MaybePromise<T>;
 }
 
+export type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
+
+
 export type Middleware<T> =
-    | PathMiddleware<T>
-    | HostnameMiddleware<T>
-    | RedirectMiddleware<T>
-    | RewriteMiddleware<T>;
+        | PathMiddleware<T>
+        | RedirectMiddleware<T>
+        | RewriteMiddleware<T>
+        | HostnameMiddleware<T>;
 
 export type HostnameCheck = string | RegExp | ((hostname: string) => boolean);
 
@@ -57,7 +60,6 @@ export interface HostnameMiddleware<T> {
     handler: NextMiddlewareWithParams<T> | Middleware<T>[];
     hostname: HostnameCheck | HostnameCheck[];
     beforeAll?: BeforeAllMiddleware;
-    guard?: (params: UrlParams) => boolean;
     pre?: (request: NextRequestWithParams<T>) => MaybePromise<
         | boolean
         | {
@@ -68,9 +70,10 @@ export interface HostnameMiddleware<T> {
 }
 
 export interface PathMiddleware<T> {
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
+    guard?: (params: UrlParams) => boolean;
     handler: NextMiddlewareWithParams<T> | Middleware<T>[];
     path: PathMatcher;
-    guard?: (params: UrlParams) => boolean;
     pre?: (request: NextRequestWithParams<T>) => MaybePromise<
         | boolean
         | {
@@ -81,15 +84,17 @@ export interface PathMiddleware<T> {
 }
 
 export interface RedirectMiddleware<T> {
-    path: PathMatcher;
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
     guard?: (params: UrlParams) => boolean;
+    path: PathMatcher;
     redirectTo: string | ((req: NextRequestWithParams<T>) => string);
     includeOrigin?: string | boolean;
 }
 
 export interface RewriteMiddleware<T> {
-    path: PathMatcher;
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
     guard?: (params: UrlParams) => boolean;
+    path: PathMatcher;
     rewriteTo: string | ((req: NextRequestWithParams<T>) => string);
 }
 

@@ -175,6 +175,63 @@ export default handlePaths(
 );
 ```
 
+### Example - Filter by request method
+This examples shows you how you can filter by request method 
+
+```ts
+// middleware.ts
+import { NextResponse, NextRequest } from "next/server";
+import { handlePaths, NextREquestWithParams } from "next-wayfinder";
+import { createMiddlewareSupabaseClient } from "@supabase/auth-helpers-nextjs";
+
+const getSession = async (req: NextRequestWithParams) => {
+    const res = NextResponse.next();
+    const supabase = createMiddlewareSupabaseClient({ req, res });
+
+    const {
+        data: { session },
+        error,
+    } = await supabase.auth.getSession();
+
+    if (error) {
+        console.error(`Auth Error: `, error);
+        return null;
+    }
+
+    return session;
+};
+
+export default handlePaths(
+    [
+        {
+            // do not check auth on GET requests
+            path: "/events/:id",
+            method: "GET",
+            handler: (_, res) => res,
+        },
+        {
+            // auth guard on PATCH
+            path: "/events/:id",
+            method: "PATCH",
+            pre: req => req.ctx?.session ? true : { redirectTo: "/auth/sign-in" },
+            handler: (req, res) => {
+                console.log("User authenticated: ", req.ctx?.session);
+                // do your stuff here
+                return res;
+            },
+        },
+    ],
+    {
+        // this injects `session` property into the request object
+        context: async req => {
+            const session = await getSession(req);
+
+            return { session };
+        },
+    }
+);
+```
+
 ### Options
 
 You can pass several options to configure your middleware

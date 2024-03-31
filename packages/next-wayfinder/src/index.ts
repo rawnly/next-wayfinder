@@ -3,6 +3,7 @@ import { match } from "ts-pattern";
 
 import {
     BeforeAllMiddleware,
+    HTTPMethod,
     Middleware,
     NextRequestWithParams,
     RequestInjector,
@@ -120,6 +121,7 @@ export function handlePaths<T>(
         const middleware = findMiddleware(middlewares, {
             path: path,
             hostname,
+            method: req.method.toUpperCase() as HTTPMethod,
         });
 
         if (options?.debug) {

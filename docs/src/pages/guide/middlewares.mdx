@@ -12,6 +12,7 @@ These properties are available in all the middlewares types
 ```ts 
 interface BaseMiddleware {
     guard?: (params: UrlParams) => boolean;
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
     pre?: (request: NextRequestWithParams<T>) => MaybePromise<
         | boolean
         | {
@@ -26,6 +27,9 @@ interface BaseMiddleware {
 | ---- | ---- |
 | `guard` | A function that checks if the given path arguments are valid. If `false` is returned then the middleware is skipped. |
 | `pre` | This is executed before the middleware. It can be useful to check authentication and separate the logic.
+| `method` | Filter the middleware by the HTTP method. If the method does not match the middleware is skipped. |
+
+> **⚠️ WARNING**: The `method` property is not available on the `HostnameMiddleware` type.
 
 
 ## Path Middleware
@@ -35,6 +39,7 @@ This is the standard middleware that is executed when the path is matched.
 interface PathMiddleware<T> {
     handler: NextMiddlewareWithParams<T> | Middleware<T>[];
     path: PathMatcher;
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
     guard?: (params: UrlParams) => boolean;
     pre?: (request: NextRequestWithParams<T>) => MaybePromise<
         | boolean
@@ -73,6 +78,7 @@ If you need a more advanced redirect logic you can use the [`PathMiddleware`](#p
 ```ts 
 interface RedirectMiddleware<T> {
     path: PathMatcher;
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
     guard?: (params: UrlParams) => boolean;
     redirectTo: string | ((req: NextRequestWithParams<T>) => string);
     includeOrigin?: string | boolean;
@@ -101,6 +107,7 @@ This middleware is executed when the path is matched and it rewrites the path to
 ```ts 
 interface RewriteMiddleware<T> {
     path: PathMatcher;
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
     guard?: (params: UrlParams) => boolean;
     rewriteTo: string | ((req: NextRequestWithParams<T>) => string);
 }

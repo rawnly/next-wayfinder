@@ -1,6 +1,6 @@
-# Supabase Authentication
+### Example - Filter by request method
 
-Below an example on how to integrate supabase authentication.
+This examples shows you how you can filter by request method 
 
 ```ts filename="middleware.ts" copy showLineNumbers
 import { NextResponse, NextRequest } from "next/server";
@@ -27,20 +27,25 @@ const getSession = async (req: NextRequestWithParams) => {
 export default handlePaths(
     [
         {
-            // auth guard
-            path: "/dashboard/:path*",
-            pre: req =>
-                req.injected?.session ? true : { redirectTo: "/auth/sign-in" },
-            handler: req => {
-                console.log("User authenticated: ", req.injected?.session);
-
+            // do not check auth on GET requests
+            path: "/events/:id",
+            method: "GET",
+            handler: (_, res) => res,
+        },
+        {
+            // auth guard on PATCH
+            path: "/events/:id",
+            method: "PATCH",
+            pre: req => req.ctx?.session ? true : { redirectTo: "/auth/sign-in" },
+            handler: (req, res) => {
+                console.log("User authenticated: ", req.ctx?.session);
                 // do your stuff here
-
-                return NextResponse.next();
+                return res;
             },
         },
     ],
     {
+        // this injects `session` property into the request object
         context: async req => {
             const session = await getSession(req);
 

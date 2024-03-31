@@ -3,6 +3,7 @@ import { match, pathToRegexp } from "path-to-regexp";
 
 import {
     HostnameCheck,
+    HTTPMethod,
     Middleware,
     NextRequestWithParams,
     PathMatcher,
@@ -20,9 +21,15 @@ export const parse: RequestParser = req => {
 export const getParams = (matcher: PathMatcher, pathname: string): UrlParams =>
     (match(matcher)(pathname) as any).params ?? {};
 
-interface FindOptions {
+export interface FindOptions {
     hostname: string;
     path: string;
+    method: HTTPMethod;
+}
+
+export function checkMethod<T>(m: Middleware<T>, method: HTTPMethod): boolean {
+    if (Middleware.isHostname(m)) return false
+    return m.method === method
 }
 
 /**
@@ -48,7 +55,7 @@ const checkHostName = (a: HostnameCheck, b: string): boolean => {
 // find the middleware corrisponding to the path or domain
 export function findMiddleware<T>(
     middlewares: Middleware<T>[],
-    { path, hostname }: FindOptions
+    { path, hostname, method }: FindOptions
 ): Middleware<T> | undefined {
     return middlewares.find(m => {
         let matches = false;
@@ -63,11 +70,18 @@ export function findMiddleware<T>(
 
         matches = pathToRegexp(m.path).test(path);
 
-        if (m.guard && m.path) {
-            return matches && m.guard(getParams(m.path, path));
+        let guardCheck = true, methodCheck = true;
+
+        if (m.method) {
+            methodCheck = checkMethod(m, method);
         }
 
-        return matches;
+        if (m.guard) {
+            guardCheck = m.guard(getParams(m.path, path));
+        }
+
+
+        return matches && methodCheck && guardCheck;
     });
 }
 
