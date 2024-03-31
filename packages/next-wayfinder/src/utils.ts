@@ -19,6 +19,7 @@ export const parse: RequestParser = req => {
 };
 
 export const getParams = (matcher: PathMatcher, pathname: string): UrlParams =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (match(matcher)(pathname) as any).params ?? {};
 
 export interface FindOptions {
