@@ -13,7 +13,7 @@
   "author": "Federico Vitale <mail@fedevitale.dev>",
   "license": "ISC",
   "devDependencies": {
-    "turbo": "^1.9.3",
-    "typescript": "^5.0.4"
+    "turbo": "^1.13.0",
+    "typescript": "^5.4.3"
   }
 }
